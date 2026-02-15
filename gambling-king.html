@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>賭王大賽 (Gambling King)</title>
+
+    <!-- Robust Error Handling Script (Must come first) -->
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            var errorDiv = document.getElementById('error-display');
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML += '<p style="color:red"><strong>Global Error:</strong> ' + msg + '<br><small>' + url + ':' + line + '</small></p>';
+            }
+            console.error("Global Error:", msg, url, line, col, error);
+            return false;
+        };
+        console.log("Starting application loading...");
+    </script>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'pixel': ['"Press Start 2P"', 'cursive', 'monospace'],
+                    },
+                    colors: {
+                        'retro-bg': '#1a1a2e',
+                        'retro-card': '#16213e',
+                        'retro-accent': '#e94560',
+                        'retro-text': '#0f3460',
+                        'neon-green': '#00ff41',
+                        'neon-pink': '#ff00ff',
+                        'neon-cyan': '#00ffff',
+                    },
+                    boxShadow: {
+                        'pixel': '4px 4px 0px 0px rgba(0,0,0,0.5)',
+                        'pixel-sm': '2px 2px 0px 0px rgba(0,0,0,0.5)',
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM (UNPKG) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel (UNPKG) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #eeeeee;
+            font-family: 'Courier New', Courier, monospace;
+            /* Fallback */
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #00ff41;
+            font-family: monospace;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #error-display {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            color: #ff4444;
+            padding: 20px;
+            overflow: auto;
+            font-family: monospace;
+            border: 4px solid red;
+        }
+
+        .pixel-border {
+            box-shadow: 4px 4px 0px 0px #0f3460;
+            border: 2px solid #0f3460;
+        }
+
+        .pixel-btn {
+            transition: all 0.1s;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px 0px #0f3460;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #16213e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e94560;
+            border: 2px solid #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff00ff;
+        }
+
+        .animate-blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Fallback Loading Screen -->
+    <div id="loading-screen">
+        <h1 style="font-size: 24px; margin-bottom: 20px;">SYSTEM LOADING...</h1>
+        <div style="border: 2px solid #00ff41; width: 200px; height: 20px; position: relative;">
+            <div style="background: #00ff41; height: 100%; width: 50%; opacity: 0.5;"></div>
+        </div>
+        <p style="margin-top: 20px;">Downloading assets...</p>
+        <p style="color: #ff00ff; margin-top: 20px; font-size: 12px;">If stuck > 10s: Check Internet or try refreshing.
+        </p>
+    </div>
+
+    <!-- Error Display Area -->
+    <div id="error-display">
+        <h2 style="color: red; border-bottom: 2px solid red; padding-bottom: 10px;">SYSTEM CRITICAL ERROR</h2>
+        <p>Please check the console (F12) or report this:</p>
+        <div id="detailed-errors"></div>
+        <hr style="border-color: red; margin: 20px 0;">
+    </div>
+
+    <div id="root" style="display: none;"></div>
+
+    <script type="text/babel">
+        // Global variables to avoid scope issues
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- Utils ---
+        function generateId() { return Math.random().toString(36).substr(2, 9); }
+        function getLocalStorage(key, initial) {
+            try {
+                const item = window.localStorage.getItem(key);
+                return item ? JSON.parse(item) : initial;
+            } catch (error) {
+                console.error(error);
+                return initial;
+            }
+        }
+        function setLocalStorage(key, value) {
+            try {
+                window.localStorage.setItem(key, JSON.stringify(value));
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // --- Icons ---
+        const Icons = {
+            Trophy: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>,
+            Calendar: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>,
+            ClipboardList: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg>,
+            Clock: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+            User: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+            Users: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+        };
+
+        // --- Common Components ---
+        function PixelCard({ children, className = "", title }) {
+            return (
+                <div className={`bg-retro-card border-4 border-retro-text relative p-4 shadow-pixel ${className}`}>
+                    {title && (
+                        <div className="absolute -top-5 left-4 bg-retro-accent text-white px-2 py-1 font-pixel text-xs border-2 border-retro-text shadow-pixel-sm z-10">
+                            {title}
+                        </div>
+                    )}
+                    {children}
+                </div>
+            );
+        }
+
+        function Button({ children, onClick, variant = "primary", className = "", disabled = false }) {
+            const colors = {
+                primary: "bg-retro-accent text-white border-white active:bg-red-700",
+                secondary: "bg-retro-text text-white border-gray-400 active:bg-blue-900",
+                success: "bg-neon-green text-black border-white active:bg-green-600",
+                danger: "bg-red-600 text-white border-white active:bg-red-800",
+                outline: "bg-transparent text-neon-cyan border-neon-cyan active:bg-neon-cyan active:text-black",
+            };
+            return (
+                <button
+                    onClick={onClick}
+                    disabled={disabled}
+                    className={`font-pixel text-xs px-4 py-3 border-2 shadow-pixel pixel-btn ${colors[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+                >
+                    {children}
+                </button>
+            );
+        }
+
+        function Input({ label, value, onChange, type = "text", placeholder }) {
+            return (
+                <div className="flex flex-col gap-2 mb-4">
+                    {label && <label className="font-pixel text-xs text-neon-cyan">{label}</label>}
+                    <input
+                        type={type}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        className="bg-gray-900 border-2 border-retro-text p-2 font-mono text-white focus:outline-none focus:border-neon-pink shadow-pixel-sm w-full"
+                    />
+                </div>
+            );
+        }
+
+        // --- Feature Components ---
+
+        function CountdownDisplay({ targetTime }) {
+            const [timeLeft, setTimeLeft] = useState(0);
+
+            useEffect(() => {
+                if (!targetTime) return;
+                const interval = setInterval(() => {
+                    const now = Date.now();
+                    const diff = Math.max(0, Math.floor((targetTime - now) / 1000));
+                    setTimeLeft(diff);
+                    if (diff <= 0) clearInterval(interval);
+                }, 1000);
+                return () => clearInterval(interval);
+            }, [targetTime]);
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+
+            if (!targetTime || timeLeft <= 0) {
+                return <div className="text-4xl font-pixel text-gray-600 animate-pulse">00:00</div>;
+            }
+
+            return (
+                <div className={`text-6xl font-pixel ${timeLeft < 60 ? 'text-red-500 animate-pulse-fast' : 'text-neon-green'}`}>
+                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                </div>
+            );
+        }
+
+        function BracketView({ matches, players }) {
+            const getPlayerName = (id) => players.find(p => p.id === id)?.name || "Bye";
+
+            // Group matches by round (simple assumption: matches created in order)
+            // For a robust system, match object needs 'round' property. 
+            // Here we visualize as a simple list for MVP but styled like cards.
+            const rounds = matches.reduce((acc, match) => {
+                const round = match.round || 1;
+                if (!acc[round]) acc[round] = [];
+                acc[round].push(match);
+                return acc;
+            }, {});
+
+            if (Object.keys(rounds).length === 0) {
+                return <div className="text-center font-pixel text-gray-500 py-10">NO TOURNAMENT SCHEDULE</div>;
+            }
+
+            return (
+                <div className="flex flex-nowrap gap-8 overflow-x-auto p-4 pb-8 items-start h-full">
+                    {Object.keys(rounds).map((roundNum) => (
+                        <div key={roundNum} className="flex-shrink-0 w-64 flex flex-col gap-4">
+                            <h3 className="text-center font-pixel text-neon-cyan mb-2 border-b-2 border-neon-cyan pb-1">ROUND {roundNum}</h3>
+                            {rounds[roundNum].map(match => (
+                                <div key={match.id} className={`bg-gray-900 border-2 ${match.status === 'completed' ? 'border-neon-green' : 'border-gray-600'} p-2 relative`}>
+                                    <div className="flex justify-between items-center bg-black/50 p-1 mb-2">
+                                        <span className="text-[10px] text-gray-400 font-mono">#{match.id.substr(0, 4)}</span>
+                                        {match.status === 'completed' && <span className="text-[10px] text-neon-green">DONE</span>}
+                                    </div>
+
+                                    {/* Player 1 */}
+                                    <div className={`flex justify-between items-center p-1 ${match.winnerId === match.p1_id ? 'bg-green-900/40 text-neon-green' : ''}`}>
+                                        <span className="font-pixel text-xs truncate max-w-[100px]">{getPlayerName(match.p1_id)}</span>
+                                        <span className="font-mono font-bold text-neon-pink">{match.score_p1 || 0}</span>
+                                    </div>
+
+                                    <div className="border-t border-gray-700 my-1"></div>
+
+                                    {/* Player 2 */}
+                                    <div className={`flex justify-between items-center p-1 ${match.winnerId === match.p2_id ? 'bg-green-900/40 text-neon-green' : ''}`}>
+                                        <span className="font-pixel text-xs truncate max-w-[100px]">{getPlayerName(match.p2_id)}</span>
+                                        <span className="font-mono font-bold text-neon-pink">{match.score_p2 || 0}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // --- Screens ---
+
+        function ContestantScreen({ players, matches, timerStats, onBack }) {
+            const [tab, setTab] = useState('timer'); // timer, bracket, rank
+
+            return (
+                <div className="flex flex-col h-full">
+                    {/* Top Bar */}
+                    <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
+                        <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
+                        <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-hidden relative">
+                        {tab === 'timer' && (
+                            <div className="h-full flex flex-col justify-center items-center p-8 text-center bg-retro-bg">
+                                <h1 className="text-2xl font-pixel text-white mb-8">NEXT ROUND IN</h1>
+                                <CountdownDisplay targetTime={timerStats?.targetTime} />
+                                <div className="mt-12 p-4 border-2 border-dashed border-gray-600">
+                                    <p className="font-pixel text-xs text-gray-400 mb-2">CURRENT STATUS</p>
+                                    <p className="text-xl text-neon-cyan animate-pulse">
+                                        {timerStats?.isRunning ? "MATCH IN PROGRESS" : "WAITING FOR START"}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        {tab === 'bracket' && (
+                            <div className="h-full bg-retro-bg">
+                                <BracketView matches={matches} players={players} />
+                            </div>
+                        )}
+                        {tab === 'rank' && (
+                            <div className="h-full bg-retro-bg p-2 overflow-y-auto">
+                                <h2 className="text-center font-pixel text-neon-green py-4 text-xl">LEADERBOARD</h2>
+                                {players.sort((a, b) => b.score - a.score).map((p, i) => (
+                                    <div key={p.id} className="mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
+                                            <span className="font-pixel text-sm text-neon-cyan">{p.name}</span>
+                                        </div>
+                                        <span className="font-pixel text-xl text-neon-pink">{p.score}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Nav */}
+                    <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
+                        <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                            <Icons.Clock size={20} className="mb-1" /> TIME
+                        </button>
+                        <button onClick={() => setTab('bracket')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'bracket' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                            <Icons.Calendar size={20} className="mb-1" /> BRACKET
+                        </button>
+                        <button onClick={() => setTab('rank')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'rank' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                            <Icons.Trophy size={20} className="mb-1" /> RANK
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast }) {
+            const [tab, setTab] = useState('manage'); // manage, timer, people
+            const [minutesInput, setMinutesInput] = useState(10);
+            const [scoreState, setScoreState] = useState({ matchId: '', p1: '', p2: '' });
+            const [newPlayerName, setNewPlayerName] = useState("");
+
+            // Timer Logic
+            const startTimer = () => {
+                const target = Date.now() + (minutesInput * 60 * 1000);
+                setTimerStats({ targetTime: target, isRunning: true });
+                setToast({ message: "Timer Started!", type: "success" });
+            };
+
+            const stopTimer = () => {
+                setTimerStats({ targetTime: null, isRunning: false });
+                setToast({ message: "Timer Stopped!", type: "error" });
+            };
+
+            // Schedule Generator
+            const generateSchedule = () => {
+                if (players.length < 2) {
+                    setToast({ message: "Need at least 2 players!", type: "error" });
+                    return;
+                }
+                if (confirm("This will CLEAR current matches and generate new ones. Proceed?")) {
+                    const shuffled = [...players].sort(() => 0.5 - Math.random());
+                    const newMatches = [];
+                    // Simple pairing for Round 1
+                    for (let i = 0; i < shuffled.length; i += 2) {
+                        if (i + 1 < shuffled.length) {
+                            newMatches.push({
+                                id: generateId(),
+                                p1_id: shuffled[i].id,
+                                p2_id: shuffled[i + 1].id,
+                                score_p1: 0,
+                                score_p2: 0,
+                                winnerId: null,
+                                status: 'pending',
+                                timestamp: Date.now(),
+                                round: 1
+                            });
+                        } else {
+                            // Bye logic could go here
+                        }
+                    }
+                    setMatches(newMatches);
+                    setToast({ message: "New Schedule Generated!", type: "success" });
+                }
+            };
+
+            const updateScore = () => {
+                if (!scoreState.matchId) return;
+                const match = matches.find(m => m.id === scoreState.matchId);
+                const s1 = parseInt(scoreState.p1) || 0;
+                const s2 = parseInt(scoreState.p2) || 0;
+
+                // Winner logic
+                let winnerId = null;
+                if (s1 > s2) winnerId = match.p1_id;
+                else if (s2 > s1) winnerId = match.p2_id;
+
+                const updatedMatches = matches.map(m =>
+                    m.id === scoreState.matchId
+                        ? { ...m, score_p1: s1, score_p2: s2, winnerId, status: 'completed' }
+                        : m
+                );
+
+                // Update Player Stats
+                const updatedPlayers = players.map(p => {
+                    // Reset stats first if needed? For MVP we accumulate. 
+                    // Ideally we recalculate from scratch based on matches array to avoid drift.
+                    // Here let's just do a simple increment (User must be careful not to double submit - MVP limitation)
+                    // Better: Recalculate totals from matches array
+                    return p; // Temporary placeholder, see below
+                });
+
+                // Recalculate all player stats from matches to be safe
+                const newPlayerStats = players.map(p => ({ ...p, score: 0, wins: 0, losses: 0 }));
+                updatedMatches.forEach(m => {
+                    if (m.status === 'completed') {
+                        const p1 = newPlayerStats.find(p => p.id === m.p1_id);
+                        const p2 = newPlayerStats.find(p => p.id === m.p2_id);
+                        if (p1) p1.score += m.score_p1;
+                        if (p2) p2.score += m.score_p2;
+                        if (m.winnerId) {
+                            const winner = newPlayerStats.find(p => p.id === m.winnerId);
+                            const loser = newPlayerStats.find(p => p.id === (m.winnerId === m.p1_id ? m.p2_id : m.p1_id));
+                            if (winner) winner.wins++;
+                            if (loser) loser.losses++;
+                        }
+                    }
+                });
+
+                setMatches(updatedMatches);
+                setPlayers(newPlayerStats);
+                setScoreState({ matchId: '', p1: '', p2: '' });
+                setToast({ message: "Score Updated!", type: "success" });
+            };
+
+            const addPlayer = () => {
+                if (!newPlayerName.trim()) return;
+                setPlayers([...players, { id: generateId(), name: newPlayerName, score: 0, wins: 0, losses: 0 }]);
+                setNewPlayerName("");
+                setToast({ message: "Player Added", type: "success" });
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-gray-900 border-x-4 border-retro-text">
+                    {/* Top Bar */}
+                    <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-800">
+                        <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
+                        <span className="font-pixel text-xs text-yellow-400">SCORER ADMIN</span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 reltive">
+
+                        {/* TAB: TIMER */}
+                        {tab === 'timer' && (
+                            <div className="space-y-6">
+                                <PixelCard title="TIMER CONTROL">
+                                    <div className="text-center mb-4">
+                                        <CountdownDisplay targetTime={timerStats?.targetTime} />
+                                    </div>
+                                    <div className="flex gap-2 mb-4">
+                                        <div className="flex-1">
+                                            <Input label="MINUTES" type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button onClick={startTimer} variant="success">START</Button>
+                                        <Button onClick={stopTimer} variant="danger">STOP/RESET</Button>
+                                    </div>
+                                </PixelCard>
+                            </div>
+                        )}
+
+                        {/* TAB: PEOPLE (Setup) */}
+                        {tab === 'people' && (
+                            <div className="space-y-6">
+                                <PixelCard title="ADD PLAYER">
+                                    <div className="flex gap-2">
+                                        <div className="flex-1"><Input placeholder="Name" value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} /></div>
+                                        <Button onClick={addPlayer} className="h-[42px] mt-0">ADD</Button>
+                                    </div>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {players.map(p => (
+                                            <span key={p.id} className="text-xs bg-gray-700 px-2 py-1 border border-gray-500 rounded">{p.name}</span>
+                                        ))}
+                                    </div>
+                                </PixelCard>
+
+                                <PixelCard title="GENERATE SCHEDULE">
+                                    <p className="text-gray-400 text-xs mb-4">Randomly pairs all players into Round 1 matches.</p>
+                                    <Button onClick={generateSchedule} variant="primary" className="w-full">GENERATE RANDOM PAIRINGS</Button>
+                                </PixelCard>
+
+                                <div className="pt-8 text-center">
+                                    <Button variant="danger" onClick={() => { if (confirm("RESET ALL DATA?")) { setPlayers([]); setMatches([]); window.location.reload(); } }}>FACTORY RESET</Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB: MANAGE (Scores) */}
+                        {tab === 'manage' && (
+                            <div className="space-y-6">
+                                <PixelCard title="UPDATE SCORES">
+                                    <select
+                                        className="w-full bg-gray-900 border-2 border-retro-text p-2 font-mono text-white mb-4"
+                                        value={scoreState.matchId}
+                                        onChange={e => {
+                                            const m = matches.find(match => match.id === e.target.value);
+                                            setScoreState({
+                                                matchId: e.target.value,
+                                                p1: m ? m.score_p1 : '',
+                                                p2: m ? m.score_p2 : ''
+                                            });
+                                        }}
+                                    >
+                                        <option value="">Select Match...</option>
+                                        {matches.filter(m => m.status === 'pending').map(m => (
+                                            <option key={m.id} value={m.id}>
+                                                {players.find(p => p.id === m.p1_id)?.name} vs {players.find(p => p.id === m.p2_id)?.name} (R{m.round || 1})
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {scoreState.matchId && (
+                                        <div className="animate-in fade-in slide-in-from-top-2">
+                                            <div className="flex gap-4 mb-4">
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-neon-cyan block mb-1">
+                                                        {players.find(p => p.id === matches.find(m => m.id === scoreState.matchId).p1_id)?.name}
+                                                    </label>
+                                                    <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p1} onChange={e => setScoreState({ ...scoreState, p1: e.target.value })} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-neon-cyan block mb-1">
+                                                        {players.find(p => p.id === matches.find(m => m.id === scoreState.matchId).p2_id)?.name}
+                                                    </label>
+                                                    <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p2} onChange={e => setScoreState({ ...scoreState, p2: e.target.value })} />
+                                                </div>
+                                            </div>
+                                            <Button onClick={updateScore} variant="success" className="w-full">SUBMIT RESULT</Button>
+                                        </div>
+                                    )}
+                                </PixelCard>
+
+                                <div className="mt-8">
+                                    <h3 className="font-pixel text-xs text-gray-500 mb-2">RECENT ACTIVITY</h3>
+                                    {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
+                                        <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
+                                            Match {m.id.substr(0, 4)}: {players.find(p => p.id === m.p1_id)?.name} ({m.score_p1}) - {players.find(p => p.id === m.p2_id)?.name} ({m.score_p2})
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Admin Nav */}
+                    <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
+                        <button onClick={() => setTab('manage')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'manage' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                            <Icons.ClipboardList size={20} className="mb-1" /> SCORES
+                        </button>
+                        <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                            <Icons.Clock size={20} className="mb-1" /> TIMER
+                        </button>
+                        <button onClick={() => setTab('people')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'people' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                            <Icons.Users size={20} className="mb-1" /> SETUP
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Main App Logic ---
+
+        function App() {
+            const [viewMode, setViewMode] = useState('select'); // select, scorer, contestant
+            const [players, setPlayers] = useState(() => getLocalStorage("gk_players", []));
+            const [matches, setMatches] = useState(() => getLocalStorage("gk_matches", []));
+            const [timerStats, setTimerStats] = useState(() => getLocalStorage("gk_timer", { targetTime: null, isRunning: false }));
+            const [toast, setToast] = useState(null);
+
+            useEffect(() => {
+                setLocalStorage("gk_players", players);
+            }, [players]);
+
+            useEffect(() => {
+                setLocalStorage("gk_matches", matches);
+            }, [matches]);
+
+            useEffect(() => {
+                setLocalStorage("gk_timer", timerStats);
+            }, [timerStats]);
+
+            useEffect(() => {
+                const loader = document.getElementById('loading-screen');
+                const root = document.getElementById('root');
+                if (loader) loader.style.display = 'none';
+                if (root) root.style.display = 'block';
+            }, []);
+
+            useEffect(() => {
+                if (toast) {
+                    const t = setTimeout(() => setToast(null), 3000);
+                    return () => clearTimeout(t);
+                }
+            }, [toast]);
+
+
+            const goBack = () => setViewMode('select');
+
+            return (
+                <div className="max-w-md mx-auto h-screen bg-retro-bg font-sans bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] text-white overflow-hidden shadow-2xl relative">
+
+                    {toast && (
+                        <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 w-3/4 z-50 p-2 font-pixel text-xs border-2 shadow-pixel text-center animate-in slide-in-from-top-4 fade-in duration-300 ${toast.type === 'error' ? 'bg-red-600 border-white' : 'bg-neon-green border-white text-black'}`}>
+                            {toast.message}
+                        </div>
+                    )}
+
+                    {viewMode === 'select' && (
+                        <div className="h-full flex flex-col justify-center items-center p-6 space-y-8 bg-retro-bg relative">
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-gray-900/60 to-black pointer-events-none"></div>
+
+                            <div className="text-center z-10 animate-pulse">
+                                <h1 className="text-4xl font-pixel text-yellow-400 drop-shadow-[4px_4px_0_#990000] mb-2">賭王大賽</h1>
+                                <p className="font-pixel text-xs text-neon-pink">TOURNAMENT SYSTEM V2.0</p>
+                            </div>
+
+                            <div className="w-full space-y-6 z-10">
+                                <button
+                                    onClick={() => setViewMode('scorer')}
+                                    className="w-full bg-retro-card border-4 border-neon-cyan p-6 hover:bg-gray-800 active:scale-95 transition-transform group"
+                                >
+                                    <Icons.Users className="mx-auto mb-2 text-neon-cyan group-hover:scale-110 transition-transform" size={48} />
+                                    <div className="text-xl font-pixel text-neon-cyan">Generate / Scorer</div>
+                                    <div className="text-[10px] text-gray-400 mt-2 font-mono">Setup match / Timer / Input Score</div>
+                                </button>
+
+                                <button
+                                    onClick={() => setViewMode('contestant')}
+                                    className="w-full bg-retro-card border-4 border-neon-green p-6 hover:bg-gray-800 active:scale-95 transition-transform group"
+                                >
+                                    <Icons.Trophy className="mx-auto mb-2 text-neon-green group-hover:scale-110 transition-transform" size={48} />
+                                    <div className="text-xl font-pixel text-neon-green">Player Mode</div>
+                                    <div className="text-[10px] text-gray-400 mt-2 font-mono">View Schedule / Timer / Rank</div>
+                                </button>
+                            </div>
+
+                            <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
+                                SYSTEM READY // WAITING FOR INPUT
+                            </div>
+                        </div>
+                    )}
+
+                    {viewMode === 'contestant' && (
+                        <ContestantScreen
+                            players={players}
+                            matches={matches}
+                            timerStats={timerStats}
+                            onBack={goBack}
+                        />
+                    )}
+
+                    {viewMode === 'scorer' && (
+                        <ScorerScreen
+                            players={players}
+                            matches={matches}
+                            setPlayers={setPlayers}
+                            setMatches={setMatches}
+                            timerStats={timerStats}
+                            setTimerStats={setTimerStats}
+                            onBack={goBack}
+                            setToast={setToast}
+                        />
+                    )}
+
+                </div>
+            );
+        }
+
+        try {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+        } catch (error) {
+            console.error("Critical Render Error:", error);
+            document.getElementById('error-display').style.display = 'block';
+            document.getElementById('detailed-errors').innerHTML += '<p><strong>Render Error:</strong> ' + error.message + '</p>';
+        }
+
+    </script>
+</body>
+
+</html>
