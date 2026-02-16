@@ -220,73 +220,81 @@ function PlayerScoreRow({ player, onUpdate }) {
 
         onUpdate(player.id, isAdd ? val : -val);
 
-        // Reset text, keep slider
+        setTextVal('');
+    };
 
-        <div className="flex flex-col gap-2 z-10">
-            {/* Control Row: +/- and Mode Switch */}
-            <div className="flex gap-2 h-8">
-                <div className="flex border border-gray-500 rounded overflow-hidden shrink-0">
-                    <button
-                        onClick={() => setIsAdd(true)}
-                        className={`px-3 font-bold flex items-center justify-center transition-colors ${isAdd ? 'bg-neon-green text-black' : 'bg-gray-900 text-gray-500'}`}
-                    >+</button>
-                    <button
-                        onClick={() => setIsAdd(false)}
-                        className={`px-3 font-bold flex items-center justify-center transition-colors ${!isAdd ? 'bg-red-500 text-white' : 'bg-gray-900 text-gray-500'}`}
-                    >-</button>
-                </div>
-
-                <div className="flex flex-1 border border-gray-500 rounded overflow-hidden">
-                    <button
-                        onClick={() => setMode('slider')}
-                        className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'slider' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
-                    >
-                        SLIDER
-                    </button>
-                    <button
-                        onClick={() => setMode('text')}
-                        className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'text' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
-                    >
-                        KEYBOARD
-                    </button>
-                </div>
+    return (
+        <div className="bg-gray-800 border border-gray-600 p-2 flex flex-col gap-2 relative overflow-hidden">
+            <div className="flex justify-between items-center z-10">
+                <span className="font-pixel text-xs text-neon-cyan truncate max-w-[150px]">{player.name}</span>
+                <span className="font-mono text-neon-pink text-sm">{player.score} pts</span>
             </div>
 
-            {/* Input Area */}
-            <div className="bg-black/40 border border-gray-600 rounded p-2 h-12 flex items-center justify-center">
-                {mode === 'slider' ? (
-                    <div className="w-full flex items-center gap-3">
-                        <input
-                            type="range"
-                            min="0" max="100" step="5"
-                            value={sliderVal}
-                            onChange={(e) => setSliderVal(parseInt(e.target.value))}
-                            className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-neon-pink"
-                        />
-                        <span className="font-mono text-white w-8 text-right font-bold">{sliderVal}</span>
+            <div className="flex flex-col gap-2 z-10">
+                {/* Control Row: +/- and Mode Switch */}
+                <div className="flex gap-2 h-8">
+                    <div className="flex border border-gray-500 rounded overflow-hidden shrink-0">
+                        <button
+                            onClick={() => setIsAdd(true)}
+                            className={`px-3 font-bold flex items-center justify-center transition-colors ${isAdd ? 'bg-neon-green text-black' : 'bg-gray-900 text-gray-500'}`}
+                        >+</button>
+                        <button
+                            onClick={() => setIsAdd(false)}
+                            className={`px-3 font-bold flex items-center justify-center transition-colors ${!isAdd ? 'bg-red-500 text-white' : 'bg-gray-900 text-gray-500'}`}
+                        >-</button>
                     </div>
-                ) : (
-                    <input
-                        type="number"
-                        value={textVal}
-                        onChange={(e) => setTextVal(e.target.value)}
-                        className="w-full bg-transparent text-white font-mono text-center text-lg outline-none placeholder-gray-700"
-                        placeholder="Enter value..."
-                        onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
-                        autoFocus
-                    />
-                )}
-            </div>
 
-            {/* Submit */}
-            <button
-                onClick={handleConfirm}
-                className={`w-full py-1 font-pixel text-xs border text-white shadow-pixel-sm active:translate-y-0.5 active:shadow-none transition-all ${isAdd ? 'bg-green-700 border-green-400 hover:bg-green-600' : 'bg-red-900 border-red-500 hover:bg-red-800'}`}
-            >
-                CONFIRM {isAdd ? '+' : '-'}{mode === 'slider' ? sliderVal : (textVal || '0')}
-            </button>
+                    <div className="flex flex-1 border border-gray-500 rounded overflow-hidden">
+                        <button
+                            onClick={() => setMode('slider')}
+                            className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'slider' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
+                        >
+                            SLIDER
+                        </button>
+                        <button
+                            onClick={() => setMode('text')}
+                            className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'text' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
+                        >
+                            KEYBOARD
+                        </button>
+                    </div>
+                </div>
+
+                {/* Input Area */}
+                <div className="bg-black/40 border border-gray-600 rounded p-2 h-12 flex items-center justify-center">
+                    {mode === 'slider' ? (
+                        <div className="w-full flex items-center gap-3">
+                            <input
+                                type="range"
+                                min="0" max="100" step="5"
+                                value={sliderVal}
+                                onChange={(e) => setSliderVal(parseInt(e.target.value))}
+                                className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-neon-pink"
+                            />
+                            <span className="font-mono text-white w-8 text-right font-bold">{sliderVal}</span>
+                        </div>
+                    ) : (
+                        <input
+                            type="number"
+                            value={textVal}
+                            onChange={(e) => setTextVal(e.target.value)}
+                            className="w-full bg-transparent text-white font-mono text-center text-lg outline-none placeholder-gray-700"
+                            placeholder="Enter value..."
+                            onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
+                            autoFocus
+                        />
+                    )}
+                </div>
+
+                {/* Submit */}
+                <button
+                    onClick={handleConfirm}
+                    className={`w-full py-1 font-pixel text-xs border text-white shadow-pixel-sm active:translate-y-0.5 active:shadow-none transition-all ${isAdd ? 'bg-green-700 border-green-400 hover:bg-green-600' : 'bg-red-900 border-red-500 hover:bg-red-800'}`}
+                >
+                    CONFIRM {isAdd ? '+' : '-'}{mode === 'slider' ? sliderVal : (textVal || '0')}
+                </button>
+            </div>
         </div>
-        </div >
     );
 }
 
@@ -398,14 +406,16 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
     );
 }
 
-function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady }) {
-    const [tab, setTab] = useState('manage'); // manage, timer, people, broadcast
+function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady, firebaseStatus }) {
+    const [tab, setTab] = useState('manage'); // manage, timer, players, schedule, broadcast
     const [minutesInput, setMinutesInput] = useState(10);
     const [scoreState, setScoreState] = useState({ matchId: '', p1: '', p2: '', mode: 'individual' });
     // Broadcast State
     const [broadcastMsg, setBroadcastMsg] = useState('');
     const [broadcastTarget, setBroadcastTarget] = useState('all'); // 'all' or 'select'
     const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [editingPlayerId, setEditingPlayerId] = useState(null);
+    const [editingName, setEditingName] = useState("");
 
     const handleSendBroadcast = () => {
         if (!broadcastMsg.trim()) return;
@@ -590,11 +600,71 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
         setToast({ message: "Score Updated!", type: "success" });
     };
 
+    const recomputePlayerStats = (basePlayers, matchList) => {
+        const newPlayerStats = basePlayers.map(p => ({ ...p, score: 0, wins: 0, losses: 0 }));
+        matchList.forEach(m => {
+            if (m.status === 'completed') {
+                const p1 = newPlayerStats.find(p => p.id === m.p1_id);
+                const p2 = m.p2_id ? newPlayerStats.find(p => p.id === m.p2_id) : null;
+                if (p1) p1.score += (m.score_p1 || 0);
+                if (p2) p2.score += (m.score_p2 || 0);
+                if (m.winnerId && m.type !== 'manual') {
+                    const winner = newPlayerStats.find(p => p.id === m.winnerId);
+                    const loser = newPlayerStats.find(p => p.id === (m.winnerId === m.p1_id ? m.p2_id : m.p1_id));
+                    if (winner) winner.wins++;
+                    if (loser) loser.losses++;
+                }
+            }
+        });
+        return newPlayerStats;
+    };
+
     const addPlayer = () => {
-        if (!newPlayerName.trim()) return;
-        setPlayers([...players, { id: generateId(), name: newPlayerName, score: 0, wins: 0, losses: 0 }]);
+        const name = newPlayerName.trim();
+        if (!name) return;
+        setPlayers([...players, { id: generateId(), name, score: 0, wins: 0, losses: 0 }]);
         setNewPlayerName("");
         setToast({ message: "Player Added", type: "success" });
+    };
+
+    const startEditPlayer = (player) => {
+        setEditingPlayerId(player.id);
+        setEditingName(player.name);
+    };
+
+    const cancelEditPlayer = () => {
+        setEditingPlayerId(null);
+        setEditingName("");
+    };
+
+    const saveEditPlayer = () => {
+        const name = editingName.trim();
+        if (!name) {
+            setToast({ message: "Name required.", type: "error" });
+            return;
+        }
+        const updatedPlayers = players.map(p => p.id === editingPlayerId ? { ...p, name } : p);
+        setPlayers(updatedPlayers);
+        setEditingPlayerId(null);
+        setEditingName("");
+        setToast({ message: "Name Updated", type: "success" });
+    };
+
+    const deletePlayer = (playerId) => {
+        const player = players.find(p => p.id === playerId);
+        if (!player) return;
+        if (!confirm(`DELETE PLAYER: ${player.name}?`)) return;
+        const remainingPlayers = players.filter(p => p.id !== playerId);
+        const remainingMatches = matches.filter(m => m.p1_id !== playerId && m.p2_id !== playerId);
+        const recalculatedPlayers = recomputePlayerStats(remainingPlayers, remainingMatches);
+        setMatches(remainingMatches);
+        setPlayers(recalculatedPlayers);
+        setSelectedPlayers(prev => prev.filter(id => id !== playerId));
+        if (editingPlayerId === playerId) {
+            setEditingPlayerId(null);
+            setEditingName("");
+        }
+        setToast({ message: "Player Deleted", type: "success" });
     };
 
     return (
@@ -604,6 +674,9 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                 <div className="flex flex-col items-center">
                     <span className="font-pixel text-xs text-yellow-400">SCORER ADMIN</span>
                     {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                    <span className={`text-[9px] ${firebaseStatus?.ready ? 'text-neon-green' : 'text-red-400'}`}>
+                        FB {firebaseStatus?.ready ? 'READY' : 'ERROR'}
+                    </span>
                 </div>
                 <span className="w-16"></span>
             </div>
@@ -634,20 +707,55 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                         </div>
                     )}
 
-                    {tab === 'people' && (
+                    {tab === 'players' && (
                         <div className="space-y-6">
                             <PixelCard title="ADD PLAYER">
                                 <div className="flex gap-2">
                                     <div className="flex-1"><Input placeholder="Name" value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} /></div>
                                     <Button onClick={addPlayer} className="h-[42px] mt-0">ADD</Button>
                                 </div>
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    {players.map(p => (
-                                        <span key={p.id} className="text-xs bg-gray-700 px-2 py-1 border border-gray-500 rounded">{p.name}</span>
-                                    ))}
-                                </div>
                             </PixelCard>
 
+                            <PixelCard title="PLAYER LIST">
+                                {players.length === 0 ? (
+                                    <div className="text-center text-xs text-gray-500 font-mono py-6">NO PLAYERS</div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {players.map(p => (
+                                            <div key={p.id} className="flex items-center gap-2 bg-gray-800 border border-gray-600 p-2">
+                                                {editingPlayerId === p.id ? (
+                                                    <input
+                                                        value={editingName}
+                                                        onChange={e => setEditingName(e.target.value)}
+                                                        className="flex-1 bg-gray-900 border border-retro-text p-1 font-mono text-white text-xs"
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    <span className="flex-1 font-pixel text-xs text-neon-cyan truncate">{p.name}</span>
+                                                )}
+                                                <div className="flex gap-2">
+                                                    {editingPlayerId === p.id ? (
+                                                        <>
+                                                            <button onClick={saveEditPlayer} className="px-2 py-1 text-[9px] border border-neon-green text-neon-green hover:bg-green-900/30">SAVE</button>
+                                                            <button onClick={cancelEditPlayer} className="px-2 py-1 text-[9px] border border-gray-500 text-gray-300 hover:bg-gray-700">CANCEL</button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => startEditPlayer(p)} className="px-2 py-1 text-[9px] border border-neon-cyan text-neon-cyan hover:bg-cyan-900/20">EDIT</button>
+                                                            <button onClick={() => deletePlayer(p.id)} className="px-2 py-1 text-[9px] border border-red-500 text-red-400 hover:bg-red-900/30">DELETE</button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </PixelCard>
+                        </div>
+                    )}
+
+                    {tab === 'schedule' && (
+                        <div className="space-y-6">
                             <PixelCard title="GENERATE SCHEDULE">
                                 <p className="text-gray-400 text-xs mb-4">Select format based on player count ({players.length}).</p>
                                 <div className="flex flex-col gap-2 mb-4">
@@ -817,15 +925,18 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                 </div>
             </div>
 
-            <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
+            <div className="bg-black border-t-4 border-retro-text grid grid-cols-5 p-2 gap-2">
                 <button onClick={() => setTab('manage')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'manage' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
                     <Icons.ClipboardList size={20} className="mb-1" /> SCORES
                 </button>
                 <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
                     <Icons.Clock size={20} className="mb-1" /> TIMER
                 </button>
-                <button onClick={() => setTab('people')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'people' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Users size={20} className="mb-1" /> SETUP
+                <button onClick={() => setTab('players')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'players' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.Users size={20} className="mb-1" /> PLAYERS
+                </button>
+                <button onClick={() => setTab('schedule')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'schedule' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.Calendar size={20} className="mb-1" /> SCHEDULE
                 </button>
                 <button onClick={() => setTab('broadcast')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'broadcast' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
                     <Icons.Radio size={20} className="mb-1" /> MSG
@@ -976,7 +1087,8 @@ function App() {
             syncFlagsRef.current.players = false;
             return;
         }
-        firebaseDbRef.current.ref(`rooms/${roomCode}/players`).set(players);
+        firebaseDbRef.current.ref(`rooms/${roomCode}/players`).set(players)
+            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
     }, [roomCode, firebaseStatus.ready, players]);
 
     useEffect(() => {
@@ -986,7 +1098,8 @@ function App() {
             syncFlagsRef.current.matches = false;
             return;
         }
-        firebaseDbRef.current.ref(`rooms/${roomCode}/matches`).set(matches);
+        firebaseDbRef.current.ref(`rooms/${roomCode}/matches`).set(matches)
+            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
     }, [roomCode, firebaseStatus.ready, matches]);
 
     useEffect(() => {
@@ -996,7 +1109,8 @@ function App() {
             syncFlagsRef.current.timer = false;
             return;
         }
-        firebaseDbRef.current.ref(`rooms/${roomCode}/timer`).set(timerStats);
+        firebaseDbRef.current.ref(`rooms/${roomCode}/timer`).set(timerStats)
+            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
     }, [roomCode, firebaseStatus.ready, timerStats]);
 
     useEffect(() => {
@@ -1006,7 +1120,8 @@ function App() {
             syncFlagsRef.current.messages = false;
             return;
         }
-        firebaseDbRef.current.ref(`rooms/${roomCode}/messages`).set(messages);
+        firebaseDbRef.current.ref(`rooms/${roomCode}/messages`).set(messages)
+            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
     }, [roomCode, firebaseStatus.ready, messages]);
 
     useEffect(() => {
@@ -1143,6 +1258,9 @@ function App() {
                     <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
                         SYSTEM READY // ENTER ROOM CODE
                     </div>
+                    <div className={`absolute bottom-10 text-[8px] font-pixel ${firebaseStatus.ready ? 'text-neon-green' : 'text-red-400'}`}>
+                        FIREBASE: {firebaseStatus.ready ? 'READY' : 'ERROR'}
+                    </div>
                 </div>
             )}
 
@@ -1172,6 +1290,7 @@ function App() {
                     onSendMessage={handleSendMessage}
                     roomCode={roomCode}
                     roomReady={roomReady}
+                    firebaseStatus={firebaseStatus}
                 />
             )}
         </div>
