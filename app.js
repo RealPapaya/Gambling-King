@@ -129,6 +129,7 @@ const I18N = {
         timer_reset: "計時已重置！",
         score_updated: "分數已更新！",
         points_added: "已加分 {delta}！",
+        player_taken: "此玩家已被選擇",
         enter_room_code: "請輸入 4 碼房號。",
         firebase_not_ready: "Firebase 尚未就緒。",
         room_not_found: "房間不存在，請先由記分員建立。",
@@ -241,6 +242,7 @@ const I18N = {
         timer_reset: "Timer Reset!",
         score_updated: "Score Updated!",
         points_added: "Points {delta} Added!",
+        player_taken: "This player is already selected.",
         enter_room_code: "Enter a 4-digit room code.",
         firebase_not_ready: "Firebase not ready.",
         room_not_found: "Room not found. Ask scorer to create it first.",
@@ -377,6 +379,10 @@ function CountdownDisplay({ targetTime, remainingSeconds, isRunning }) {
 
         if (!targetTime) return;
 
+        const nowInit = Date.now();
+        const diffInit = Math.max(0, Math.floor((targetTime - nowInit) / 1000));
+        setDisplayTime(diffInit);
+
         const interval = setInterval(() => {
             const now = Date.now();
             const diff = Math.max(0, Math.floor((targetTime - now) / 1000));
@@ -406,7 +412,8 @@ function CountdownDisplay({ targetTime, remainingSeconds, isRunning }) {
 function BracketView({ matches, players, t }) {
     const getPlayerName = (id) => players.find(p => p.id === id)?.name || (t ? t('bye') : "Bye");
 
-    const rounds = matches.reduce((acc, match) => {
+    const visibleMatches = matches.filter(m => m && m.type !== 'manual' && m.p1_id && m.p2_id);
+    const rounds = visibleMatches.reduce((acc, match) => {
         const round = match.round || 1;
         if (!acc[round]) acc[round] = [];
         acc[round].push(match);
@@ -537,7 +544,7 @@ function PlayerScoreRow({ player, onUpdate, t }) {
     );
 }
 
-function AnimatedNumber({ value, duration = 350, className = "" }) {
+function AnimatedNumber({ value, duration = 2000, className = "" }) {
     const [displayValue, setDisplayValue] = useState(value);
     const prevValueRef = useRef(value);
     const rafRef = useRef(null);
@@ -575,12 +582,44 @@ function AnimatedNumber({ value, duration = 350, className = "" }) {
     return <span className={className}>{displayValue}</span>;
 }
 
-function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode, t }) {
+function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode, t, setPlayers, clientId, setToast, roomReady }) {
     const [tab, setTab] = useState('timer'); // timer, bracket, rank
     const currentPlayer = players.find(p => p.id === currentPlayerId);
     const sortedPlayers = useMemo(() => [...players].sort((a, b) => b.score - a.score), [players]);
     const rankRowRefs = useRef(new Map());
     const prevPositionsRef = useRef(new Map());
+    const prevScoresRef = useRef(new Map());
+    const deltaTimersRef = useRef(new Map());
+    const [scoreDeltas, setScoreDeltas] = useState({});
+
+    const releaseCurrentPlayer = () => {
+        if (!currentPlayerId) return;
+        setPlayers(prev => prev.map(pl => {
+            if (pl.id !== currentPlayerId) return pl;
+            if (pl.selectedBy && pl.selectedBy !== clientId) return pl;
+            return { ...pl, selectedBy: null, selectedAt: null };
+        }));
+        setCurrentPlayerId(null);
+    };
+
+    const handleSelectPlayer = (player) => {
+        if (player.selectedBy && player.selectedBy !== clientId) {
+            if (setToast) {
+                setToast({ message: t ? t('player_taken') : 'This player is already selected.', type: "error" });
+            }
+            return;
+        }
+        setPlayers(prev => prev.map(pl => {
+            if (pl.id === player.id) {
+                return { ...pl, selectedBy: clientId, selectedAt: Date.now() };
+            }
+            if (pl.id === currentPlayerId && pl.selectedBy === clientId) {
+                return { ...pl, selectedBy: null, selectedAt: null };
+            }
+            return pl;
+        }));
+        setCurrentPlayerId(player.id);
+    };
 
     useLayoutEffect(() => {
         const newPositions = new Map();
@@ -600,7 +639,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                 node.style.transition = 'transform 0s';
                 node.style.willChange = 'transform';
                 const raf = requestAnimationFrame(() => {
-                    node.style.transition = 'transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    node.style.transition = 'transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1)';
                     node.style.transform = 'translateY(0)';
                 });
                 rafIds.push(raf);
@@ -612,6 +651,54 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
             rafIds.forEach(id => cancelAnimationFrame(id));
         };
     }, [sortedPlayers.map(p => `${p.id}:${p.score}`).join('|')]);
+
+    useEffect(() => {
+        const prev = prevScoresRef.current;
+        const next = new Map();
+        players.forEach(p => next.set(p.id, p.score || 0));
+
+        if (prev.size === 0) {
+            prevScoresRef.current = next;
+            return;
+        }
+
+        const updates = {};
+        players.forEach(p => {
+            if (!prev.has(p.id)) return;
+            const before = prev.get(p.id);
+            const after = p.score || 0;
+            const delta = after - before;
+            if (delta !== 0) {
+                updates[p.id] = delta;
+            }
+        });
+
+        if (Object.keys(updates).length > 0) {
+            setScoreDeltas(prevState => ({ ...prevState, ...updates }));
+            Object.entries(updates).forEach(([id, delta]) => {
+                if (deltaTimersRef.current.has(id)) {
+                    clearTimeout(deltaTimersRef.current.get(id));
+                }
+                const timer = setTimeout(() => {
+                    setScoreDeltas(current => {
+                        const nextState = { ...current };
+                        delete nextState[id];
+                        return nextState;
+                    });
+                }, 1400);
+                deltaTimersRef.current.set(id, timer);
+            });
+        }
+
+        prevScoresRef.current = next;
+    }, [players]);
+
+    useEffect(() => {
+        return () => {
+            deltaTimersRef.current.forEach(timer => clearTimeout(timer));
+            deltaTimersRef.current.clear();
+        };
+    }, []);
 
     if (!currentPlayerId || !currentPlayer) {
         return (
@@ -629,15 +716,19 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                     <PixelCard title={t ? t('select_name') : 'SELECT YOUR NAME'}>
                         {players.length > 0 ? (
                             <div className="grid grid-cols-2 gap-2">
-                                {players.map(p => (
-                                    <button
-                                        key={p.id}
-                                        onClick={() => setCurrentPlayerId(p.id)}
-                                        className="bg-gray-800 border-2 border-retro-text px-2 py-3 font-pixel text-[10px] text-neon-cyan hover:bg-gray-700 active:scale-95 transition"
-                                    >
-                                        <span className="block truncate">{p.name}</span>
-                                    </button>
-                                ))}
+                                {players.map(p => {
+                                    const isTaken = p.selectedBy && p.selectedBy !== clientId;
+                                    return (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => handleSelectPlayer(p)}
+                                            disabled={isTaken}
+                                            className={`bg-gray-800 border-2 border-retro-text px-2 py-3 font-pixel text-[10px] text-neon-cyan transition ${isTaken ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-700 active:scale-95'}`}
+                                        >
+                                            <span className="block truncate">{p.name}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center text-xs text-gray-500 font-mono py-6">
@@ -666,51 +757,64 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                     <span className="font-pixel text-xs text-neon-pink">{t ? t('player_view') : 'PLAYER VIEW'}</span>
                     {roomCode && <span className="text-[10px] text-neon-cyan">{t ? t('room') : 'ROOM'} {roomCode}</span>}
                 </div>
-                <button onClick={() => setCurrentPlayerId(null)} className="text-[10px] text-gray-400 hover:text-white px-2">{t ? t('change_name') : 'CHANGE NAME'}</button>
+                <button onClick={releaseCurrentPlayer} className="text-[10px] text-gray-400 hover:text-white px-2">{t ? t('change_name') : 'CHANGE NAME'}</button>
             </div>
 
             <div className="flex-1 overflow-hidden relative">
-                {tab === 'timer' && (
-                    <div className="h-full flex flex-col justify-center items-center p-8 text-center bg-retro-bg">
-                        <h1 className="text-2xl font-pixel text-white mb-8">{t ? t('match_time') : 'MATCH TIME'}</h1>
-                        <CountdownDisplay
-                            targetTime={timerStats?.targetTime}
-                            remainingSeconds={timerStats?.remainingSeconds}
-                            isRunning={timerStats?.isRunning}
-                        />
-
-                    </div>
-                )}
+                    {tab === 'timer' && (
+                        <div className="h-full flex flex-col justify-center items-center p-8 text-center bg-retro-bg">
+                            <h1 className="text-2xl font-pixel text-white mb-8">{t ? t('match_time') : 'MATCH TIME'}</h1>
+                            {!roomReady ? (
+                                <div className="text-xl font-pixel text-gray-400 animate-pulse">
+                                    {t ? t('syncing_room_data') : 'LOADING...'}
+                                </div>
+                            ) : (
+                                <CountdownDisplay
+                                    targetTime={timerStats?.targetTime}
+                                    remainingSeconds={timerStats?.remainingSeconds}
+                                    isRunning={timerStats?.isRunning}
+                                />
+                            )}
+                        </div>
+                    )}
                 {tab === 'bracket' && (
                     <div className="h-full bg-retro-bg">
                         <BracketView matches={matches} players={players} t={t} />
                     </div>
                 )}
-                    {tab === 'rank' && (
-                        <div className="h-full bg-retro-bg p-2 overflow-y-auto">
-                            <h2 className="text-center font-pixel text-neon-green py-4 text-xl">{t ? t('leaderboard') : 'LEADERBOARD'}</h2>
+                {tab === 'rank' && (
+                    <div className="h-full bg-retro-bg p-2 overflow-y-auto">
+                        <h2 className="text-center font-pixel text-neon-green py-4 text-xl">{t ? t('leaderboard') : 'LEADERBOARD'}</h2>
                             {sortedPlayers.map((p, i) => {
                                 const isMe = currentPlayerId && p.id === currentPlayerId;
+                                const delta = scoreDeltas[p.id];
                                 return (
                                     <div
                                         key={p.id}
                                         ref={(el) => {
                                             if (el) rankRowRefs.current.set(p.id, el);
-                                            else rankRowRefs.current.delete(p.id);
-                                        }}
-                                        className={`mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between ${isMe ? 'border-neon-green bg-green-900/40 shadow-[0_0_12px_rgba(0,255,65,0.35)]' : ''}`}
-                                    >
+                                        else rankRowRefs.current.delete(p.id);
+                                    }}
+                                    className={`mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between ${isMe ? 'border-neon-green bg-green-900/40 shadow-[0_0_12px_rgba(0,255,65,0.35)]' : ''}`}
+                                >
                                         <div className="flex items-center gap-3">
                                             <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
                                             <span className={`font-pixel text-sm ${isMe ? 'text-neon-green' : 'text-neon-cyan'}`}>{p.name}</span>
                                             {isMe && <span className="text-[9px] text-neon-green border border-neon-green px-1 py-0.5">{t ? t('you_tag') : 'YOU'}</span>}
                                         </div>
-                                        <AnimatedNumber value={p.score} className="font-pixel text-xl text-neon-pink" />
+                                        <div className="flex items-center gap-2">
+                                            {delta ? (
+                                                <span className={`font-pixel text-xs animate-blink ${delta > 0 ? 'text-neon-green' : 'text-red-500'}`}>
+                                                    {delta > 0 ? `+${delta}` : `${delta}`}
+                                                </span>
+                                            ) : null}
+                                            <AnimatedNumber value={p.score} className="font-pixel text-xl text-neon-pink" />
+                                        </div>
                                     </div>
                                 );
                             })}
-                        </div>
-                    )}
+                    </div>
+                )}
             </div>
 
             <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
@@ -1026,7 +1130,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                 </div>
                                 <div className="flex gap-2 mb-4">
                                     <div className="flex-1">
-                                    <Input label={t ? t('set_minutes') : 'SET MINUTES'} type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
+                                        <Input label={t ? t('set_minutes') : 'SET MINUTES'} type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2">
@@ -1180,7 +1284,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                                 }));
                                             }}
                                         >
-                                        <option value="">{t ? t('select_match') : 'Select Match...'}</option>
+                                            <option value="">{t ? t('select_match') : 'Select Match...'}</option>
                                             {matches.filter(m => m.status === 'pending').map(m => (
                                                 <option key={m.id} value={m.id}>
                                                     {t ? t('round_short') : 'R'}{m.round} - {players.find(p => p.id === m.p1_id)?.name} {t ? t('vs') : 'vs'} {players.find(p => p.id === m.p2_id)?.name}
@@ -1204,31 +1308,31 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                                         <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p2} onChange={e => setScoreState({ ...scoreState, p2: e.target.value })} />
                                                     </div>
                                                 </div>
-                                            <Button onClick={updateScore} variant="success" className="w-full">{t ? t('submit_result') : 'SUBMIT RESULT'}</Button>
+                                                <Button onClick={updateScore} variant="success" className="w-full">{t ? t('submit_result') : 'SUBMIT RESULT'}</Button>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
                                 {/* INDIVIDUAL MODE UI */}
-                            {scoreState.mode === 'individual' && (
-                                <div className="animate-in fade-in space-y-4">
-                                    <div className="text-xs text-gray-400 text-center mb-2 font-mono">{t ? t('quick_add_points') : 'QUICK ADD POINTS'}</div>
-                                    {players.map(p => (
-                                        <PlayerScoreRow key={p.id} player={p} onUpdate={updateIndividualScore} t={t} />
-                                    ))}
-                                </div>
-                            )}
+                                {scoreState.mode === 'individual' && (
+                                    <div className="animate-in fade-in space-y-4">
+                                        <div className="text-xs text-gray-400 text-center mb-2 font-mono">{t ? t('quick_add_points') : 'QUICK ADD POINTS'}</div>
+                                        {players.map(p => (
+                                            <PlayerScoreRow key={p.id} player={p} onUpdate={updateIndividualScore} t={t} />
+                                        ))}
+                                    </div>
+                                )}
 
                             </PixelCard>
 
                             <div className="mt-8">
-                            <h3 className="font-pixel text-xs text-gray-500 mb-2">{t ? t('recent_activity') : 'RECENT ACTIVITY'}</h3>
-                            {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
-                                <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
-                                    {t ? t('round_short') : 'R'}{m.round}: {players.find(p => p.id === m.p1_id)?.name} {m.score_p1}-{m.score_p2} {players.find(p => p.id === m.p2_id)?.name}
-                                </div>
-                            ))}
+                                <h3 className="font-pixel text-xs text-gray-500 mb-2">{t ? t('recent_activity') : 'RECENT ACTIVITY'}</h3>
+                                {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
+                                    <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
+                                        {t ? t('round_short') : 'R'}{m.round}: {players.find(p => p.id === m.p1_id)?.name} {m.score_p1}-{m.score_p2} {players.find(p => p.id === m.p2_id)?.name}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
@@ -1287,23 +1391,23 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                 </div>
             </div>
 
-                <div className="bg-black border-t-4 border-retro-text grid grid-cols-5 p-2 gap-2">
-                    <button onClick={() => setTab('manage')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'manage' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                        <Icons.ClipboardList size={20} className="mb-1" /> {t ? t('scores') : 'SCORES'}
-                    </button>
-                    <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                        <Icons.Clock size={20} className="mb-1" /> {t ? t('timer') : 'TIMER'}
-                    </button>
-                    <button onClick={() => setTab('players')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'players' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                        <Icons.Users size={20} className="mb-1" /> {t ? t('players') : 'PLAYERS'}
-                    </button>
-                    <button onClick={() => setTab('schedule')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'schedule' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                        <Icons.Calendar size={20} className="mb-1" /> {t ? t('schedule') : 'SCHEDULE'}
-                    </button>
-                    <button onClick={() => setTab('broadcast')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'broadcast' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                        <Icons.Radio size={20} className="mb-1" /> {t ? t('msg') : 'MSG'}
-                    </button>
-                </div>
+            <div className="bg-black border-t-4 border-retro-text grid grid-cols-5 p-2 gap-2">
+                <button onClick={() => setTab('manage')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'manage' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.ClipboardList size={20} className="mb-1" /> {t ? t('scores') : 'SCORES'}
+                </button>
+                <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.Clock size={20} className="mb-1" /> {t ? t('timer') : 'TIMER'}
+                </button>
+                <button onClick={() => setTab('players')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'players' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.Users size={20} className="mb-1" /> {t ? t('players') : 'PLAYERS'}
+                </button>
+                <button onClick={() => setTab('schedule')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'schedule' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.Calendar size={20} className="mb-1" /> {t ? t('schedule') : 'SCHEDULE'}
+                </button>
+                <button onClick={() => setTab('broadcast')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'broadcast' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                    <Icons.Radio size={20} className="mb-1" /> {t ? t('msg') : 'MSG'}
+                </button>
+            </div>
         </div>
     );
 }
@@ -1329,6 +1433,14 @@ function App() {
     const [lang, setLang] = useState(() => {
         const stored = getLocalStorage("gk_lang", "zh");
         return stored === "en" ? "en" : "zh";
+    });
+    const [clientId] = useState(() => {
+        let existing = getLocalStorage("gk_client_id", null);
+        if (!existing) {
+            existing = generateId();
+            setLocalStorage("gk_client_id", existing);
+        }
+        return existing;
     });
     const t = (key, vars) => {
         const dict = I18N[lang] || I18N.zh;
@@ -1626,89 +1738,89 @@ function App() {
                 </div>
             )}
 
-                {viewMode === 'select' && (
-                    <div className="h-full flex flex-col justify-center items-center p-6 space-y-6 bg-retro-bg relative overflow-y-auto">
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-gray-900/60 to-black pointer-events-none"></div>
+            {viewMode === 'select' && (
+                <div className="h-full flex flex-col justify-center items-center p-6 space-y-6 bg-retro-bg relative overflow-y-auto">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-gray-900/60 to-black pointer-events-none"></div>
 
-                        <div className="text-center z-10 animate-pulse">
-                            <h1 className="text-4xl font-pixel text-yellow-400 drop-shadow-[4px_4px_0_#990000] mb-2">{t('app_title')}</h1>
-                            <p className="font-pixel text-xs text-neon-pink">{t('app_subtitle')}</p>
-                        </div>
+                    <div className="text-center z-10 animate-pulse">
+                        <h1 className="text-4xl font-pixel text-yellow-400 drop-shadow-[4px_4px_0_#990000] mb-2">{t('app_title')}</h1>
+                        <p className="font-pixel text-xs text-neon-pink">{t('app_subtitle')}</p>
+                    </div>
 
-                        <div className="z-10 flex items-center gap-2 text-[10px] font-pixel">
-                            <span className="text-gray-400">{t('language')}:</span>
-                            <button
-                                onClick={() => setLang('zh')}
-                                className={`px-2 py-1 border ${lang === 'zh' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
-                            >
-                                {t('lang_zh')}
-                            </button>
-                            <button
-                                onClick={() => setLang('en')}
-                                className={`px-2 py-1 border ${lang === 'en' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
-                            >
-                                {t('lang_en')}
-                            </button>
-                        </div>
+                    <div className="z-10 flex items-center gap-2 text-[10px] font-pixel">
+                        <span className="text-gray-400">{t('language')}:</span>
+                        <button
+                            onClick={() => setLang('zh')}
+                            className={`px-2 py-1 border ${lang === 'zh' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
+                        >
+                            {t('lang_zh')}
+                        </button>
+                        <button
+                            onClick={() => setLang('en')}
+                            className={`px-2 py-1 border ${lang === 'en' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
+                        >
+                            {t('lang_en')}
+                        </button>
+                    </div>
 
-                        <div className="w-full space-y-6 z-10">
-                            <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Icons.Users className="text-neon-cyan" size={36} />
-                                    <div>
-                                        <div className="text-lg font-pixel text-neon-cyan">{t('scorer_title')}</div>
-                                        <div className="text-[10px] text-gray-400 font-mono">{t('scorer_desc')}</div>
-                                    </div>
+                    <div className="w-full space-y-6 z-10">
+                        <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
+                            <div className="flex items-center gap-3 mb-4">
+                                <Icons.Users className="text-neon-cyan" size={36} />
+                                <div>
+                                    <div className="text-lg font-pixel text-neon-cyan">{t('scorer_title')}</div>
+                                    <div className="text-[10px] text-gray-400 font-mono">{t('scorer_desc')}</div>
                                 </div>
-                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
-                                <input
-                                    type="tel"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    maxLength={4}
-                                    value={roomDraftScorer}
-                                    onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
-                                    placeholder="1234"
-                                    className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
-                                />
-                                <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
-                                    {t('enter_scorer')}
-                                </Button>
                             </div>
+                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
+                            <input
+                                type="tel"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                value={roomDraftScorer}
+                                onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
+                                placeholder="1234"
+                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                            />
+                            <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
+                                {t('enter_scorer')}
+                            </Button>
+                        </div>
 
-                            <div className="w-full bg-retro-card border-4 border-neon-green p-5">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Icons.Trophy className="text-neon-green" size={36} />
-                                    <div>
-                                        <div className="text-lg font-pixel text-neon-green">{t('player_title')}</div>
-                                        <div className="text-[10px] text-gray-400 font-mono">{t('player_desc')}</div>
-                                    </div>
+                        <div className="w-full bg-retro-card border-4 border-neon-green p-5">
+                            <div className="flex items-center gap-3 mb-4">
+                                <Icons.Trophy className="text-neon-green" size={36} />
+                                <div>
+                                    <div className="text-lg font-pixel text-neon-green">{t('player_title')}</div>
+                                    <div className="text-[10px] text-gray-400 font-mono">{t('player_desc')}</div>
                                 </div>
-                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
-                                <input
-                                    type="tel"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    maxLength={4}
-                                    value={roomDraftPlayer}
-                                    onChange={e => setRoomDraftPlayer(normalizeRoomCode(e.target.value))}
-                                    placeholder="1234"
-                                    className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
-                                />
-                                <Button onClick={handleEnterPlayer} className="w-full mt-4" variant="success" disabled={roomDraftPlayer.length !== 4}>
-                                    {t('enter_player')}
-                                </Button>
                             </div>
-                        </div>
-
-                        <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
-                            {t('system_ready_enter')}
-                        </div>
-                        <div className={`absolute bottom-10 text-[8px] font-pixel ${firebaseStatus.ready ? 'text-neon-green' : 'text-red-400'}`}>
-                            {t('firebase_status', { status: firebaseStatus.ready ? t('firebase_ready') : t('firebase_error') })}
+                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
+                            <input
+                                type="tel"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                value={roomDraftPlayer}
+                                onChange={e => setRoomDraftPlayer(normalizeRoomCode(e.target.value))}
+                                placeholder="1234"
+                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                            />
+                            <Button onClick={handleEnterPlayer} className="w-full mt-4" variant="success" disabled={roomDraftPlayer.length !== 4}>
+                                {t('enter_player')}
+                            </Button>
                         </div>
                     </div>
-                )}
+
+                    <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
+                        {t('system_ready_enter')}
+                    </div>
+                    <div className={`absolute bottom-10 text-[8px] font-pixel ${firebaseStatus.ready ? 'text-neon-green' : 'text-red-400'}`}>
+                        {t('firebase_status', { status: firebaseStatus.ready ? t('firebase_ready') : t('firebase_error') })}
+                    </div>
+                </div>
+            )}
 
                 {viewMode === 'contestant' && (
                     <ContestantScreen
@@ -1721,26 +1833,30 @@ function App() {
                         setCurrentPlayerId={setCurrentPlayerId}
                         roomCode={roomCode}
                         t={t}
+                        setPlayers={setPlayers}
+                        clientId={clientId}
+                        setToast={setToast}
+                        roomReady={roomReady}
                     />
                 )}
 
-                {viewMode === 'scorer' && (
-                    <ScorerScreen
-                        players={players}
-                        matches={matches}
+            {viewMode === 'scorer' && (
+                <ScorerScreen
+                    players={players}
+                    matches={matches}
                     setPlayers={setPlayers}
                     setMatches={setMatches}
                     timerStats={timerStats}
                     setTimerStats={setTimerStats}
                     onBack={goBack}
                     setToast={setToast}
-                        onSendMessage={handleSendMessage}
-                        roomCode={roomCode}
-                        roomReady={roomReady}
-                        firebaseStatus={firebaseStatus}
-                        t={t}
-                    />
-                )}
+                    onSendMessage={handleSendMessage}
+                    roomCode={roomCode}
+                    roomReady={roomReady}
+                    firebaseStatus={firebaseStatus}
+                    t={t}
+                />
+            )}
         </div>
     );
 }

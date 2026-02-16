@@ -93,7 +93,7 @@ html[lang="en"] .font-mono {
 }
 
 .animate-blink {
-    animation: blink 1s step-end infinite;
+    animation: blink 0.5s step-end infinite;
 }
 
 @keyframes blink {
