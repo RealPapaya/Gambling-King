@@ -221,86 +221,72 @@ function PlayerScoreRow({ player, onUpdate }) {
         onUpdate(player.id, isAdd ? val : -val);
 
         // Reset text, keep slider
-        setTextVal('');
-    };
 
-    return (
-        <div className="bg-gray-800 border border-gray-600 p-2 flex flex-col gap-2 relative overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 p-1 opacity-10 font-pixel text-[40px] leading-none pointer-events-none text-white">
-                {isAdd ? '+' : '-'}
-            </div>
-
-            <div className="flex justify-between items-center z-10">
-                <span className="font-pixel text-xs text-neon-cyan truncate max-w-[150px]">{player.name}</span>
-                <span className="font-mono text-neon-pink text-sm">{player.score} pts</span>
-            </div>
-
-            <div className="flex flex-col gap-2 z-10">
-                {/* Control Row: +/- and Mode Switch */}
-                <div className="flex gap-2 h-8">
-                    <div className="flex border border-gray-500 rounded overflow-hidden shrink-0">
-                        <button
-                            onClick={() => setIsAdd(true)}
-                            className={`px-3 font-bold flex items-center justify-center transition-colors ${isAdd ? 'bg-neon-green text-black' : 'bg-gray-900 text-gray-500'}`}
-                        >+</button>
-                        <button
-                            onClick={() => setIsAdd(false)}
-                            className={`px-3 font-bold flex items-center justify-center transition-colors ${!isAdd ? 'bg-red-500 text-white' : 'bg-gray-900 text-gray-500'}`}
-                        >-</button>
-                    </div>
-
-                    <div className="flex flex-1 border border-gray-500 rounded overflow-hidden">
-                        <button
-                            onClick={() => setMode('slider')}
-                            className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'slider' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
-                        >
-                            SLIDER
-                        </button>
-                        <button
-                            onClick={() => setMode('text')}
-                            className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'text' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
-                        >
-                            KEYBOARD
-                        </button>
-                    </div>
+        <div className="flex flex-col gap-2 z-10">
+            {/* Control Row: +/- and Mode Switch */}
+            <div className="flex gap-2 h-8">
+                <div className="flex border border-gray-500 rounded overflow-hidden shrink-0">
+                    <button
+                        onClick={() => setIsAdd(true)}
+                        className={`px-3 font-bold flex items-center justify-center transition-colors ${isAdd ? 'bg-neon-green text-black' : 'bg-gray-900 text-gray-500'}`}
+                    >+</button>
+                    <button
+                        onClick={() => setIsAdd(false)}
+                        className={`px-3 font-bold flex items-center justify-center transition-colors ${!isAdd ? 'bg-red-500 text-white' : 'bg-gray-900 text-gray-500'}`}
+                    >-</button>
                 </div>
 
-                {/* Input Area */}
-                <div className="bg-black/40 border border-gray-600 rounded p-2 h-12 flex items-center justify-center">
-                    {mode === 'slider' ? (
-                        <div className="w-full flex items-center gap-3">
-                            <input
-                                type="range"
-                                min="0" max="100" step="5"
-                                value={sliderVal}
-                                onChange={(e) => setSliderVal(parseInt(e.target.value))}
-                                className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-neon-pink"
-                            />
-                            <span className="font-mono text-white w-8 text-right font-bold">{sliderVal}</span>
-                        </div>
-                    ) : (
+                <div className="flex flex-1 border border-gray-500 rounded overflow-hidden">
+                    <button
+                        onClick={() => setMode('slider')}
+                        className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'slider' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
+                    >
+                        SLIDER
+                    </button>
+                    <button
+                        onClick={() => setMode('text')}
+                        className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'text' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
+                    >
+                        KEYBOARD
+                    </button>
+                </div>
+            </div>
+
+            {/* Input Area */}
+            <div className="bg-black/40 border border-gray-600 rounded p-2 h-12 flex items-center justify-center">
+                {mode === 'slider' ? (
+                    <div className="w-full flex items-center gap-3">
                         <input
-                            type="number"
-                            value={textVal}
-                            onChange={(e) => setTextVal(e.target.value)}
-                            className="w-full bg-transparent text-white font-mono text-center text-lg outline-none placeholder-gray-700"
-                            placeholder="Enter value..."
-                            onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
-                            autoFocus
+                            type="range"
+                            min="0" max="100" step="5"
+                            value={sliderVal}
+                            onChange={(e) => setSliderVal(parseInt(e.target.value))}
+                            className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-neon-pink"
                         />
-                    )}
-                </div>
-
-                {/* Submit */}
-                <button
-                    onClick={handleConfirm}
-                    className={`w-full py-1 font-pixel text-xs border text-white shadow-pixel-sm active:translate-y-0.5 active:shadow-none transition-all ${isAdd ? 'bg-green-700 border-green-400 hover:bg-green-600' : 'bg-red-900 border-red-500 hover:bg-red-800'}`}
-                >
-                    CONFIRM {isAdd ? '+' : '-'}{mode === 'slider' ? sliderVal : (textVal || '0')}
-                </button>
+                        <span className="font-mono text-white w-8 text-right font-bold">{sliderVal}</span>
+                    </div>
+                ) : (
+                    <input
+                        type="number"
+                        value={textVal}
+                        onChange={(e) => setTextVal(e.target.value)}
+                        className="w-full bg-transparent text-white font-mono text-center text-lg outline-none placeholder-gray-700"
+                        placeholder="Enter value..."
+                        onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
+                        autoFocus
+                    />
+                )}
             </div>
+
+            {/* Submit */}
+            <button
+                onClick={handleConfirm}
+                className={`w-full py-1 font-pixel text-xs border text-white shadow-pixel-sm active:translate-y-0.5 active:shadow-none transition-all ${isAdd ? 'bg-green-700 border-green-400 hover:bg-green-600' : 'bg-red-900 border-red-500 hover:bg-red-800'}`}
+            >
+                CONFIRM {isAdd ? '+' : '-'}{mode === 'slider' ? sliderVal : (textVal || '0')}
+            </button>
         </div>
+        </div >
     );
 }
 
@@ -312,7 +298,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
         return (
             <div className="flex flex-col h-full">
                 <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
-                    <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
+                    <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; EXIT</Button>
                     <div className="flex flex-col items-center">
                         <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
                         {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
@@ -356,7 +342,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
         <div className="flex flex-col h-full">
             <BroadcastOverlay messages={messages} currentPlayerId={currentPlayerId} />
             <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
-                <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
+                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; EXIT</Button>
                 <div className="flex flex-col items-center">
                     <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
                     {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
@@ -614,7 +600,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
     return (
         <div className="flex flex-col h-full bg-gray-900 border-x-4 border-retro-text">
             <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-800">
-                <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
+                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; EXIT</Button>
                 <div className="flex flex-col items-center">
                     <span className="font-pixel text-xs text-yellow-400">SCORER ADMIN</span>
                     {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
@@ -629,205 +615,205 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                     </div>
                 )}
                 <div className={`${!roomReady ? 'pointer-events-none opacity-60' : ''}`}>
-                {tab === 'timer' && (
-                    <div className="space-y-6">
-                        <PixelCard title="TIMER CONTROL">
-                            <div className="text-center mb-4">
-                                <CountdownDisplay targetTime={timerStats?.targetTime} />
-                            </div>
-                            <div className="flex gap-2 mb-4">
-                                <div className="flex-1">
-                                    <Input label="MINUTES" type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
+                    {tab === 'timer' && (
+                        <div className="space-y-6">
+                            <PixelCard title="TIMER CONTROL">
+                                <div className="text-center mb-4">
+                                    <CountdownDisplay targetTime={timerStats?.targetTime} />
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button onClick={startTimer} variant="success">START</Button>
-                                <Button onClick={stopTimer} variant="danger">STOP/RESET</Button>
-                            </div>
-                        </PixelCard>
-                    </div>
-                )}
-
-                {tab === 'people' && (
-                    <div className="space-y-6">
-                        <PixelCard title="ADD PLAYER">
-                            <div className="flex gap-2">
-                                <div className="flex-1"><Input placeholder="Name" value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} /></div>
-                                <Button onClick={addPlayer} className="h-[42px] mt-0">ADD</Button>
-                            </div>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {players.map(p => (
-                                    <span key={p.id} className="text-xs bg-gray-700 px-2 py-1 border border-gray-500 rounded">{p.name}</span>
-                                ))}
-                            </div>
-                        </PixelCard>
-
-                        <PixelCard title="GENERATE SCHEDULE">
-                            <p className="text-gray-400 text-xs mb-4">Select format based on player count ({players.length}).</p>
-                            <div className="flex flex-col gap-2 mb-4">
-                                <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === '1V1' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
-                                    <input type="radio" name="ttype" checked={tournamentType === '1V1'} onChange={() => setTournamentType('1V1')} />
-                                    <span className="font-pixel text-xs">1V1 (Single Elim Round 1)</span>
-                                </label>
-                                <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === 'SWISS' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
-                                    <input type="radio" name="ttype" checked={tournamentType === 'SWISS'} onChange={() => setTournamentType('SWISS')} />
-                                    <span className="font-pixel text-xs">SWISS (High Scores vs High)</span>
-                                </label>
-                                <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === 'GROUP' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
-                                    <input type="radio" name="ttype" checked={tournamentType === 'GROUP'} onChange={() => setTournamentType('GROUP')} />
-                                    <span className="font-pixel text-xs">GROUP (Round Robin)</span>
-                                </label>
-                            </div>
-                            <Button onClick={generateSchedule} variant="primary" className="w-full">GENERATE</Button>
-                        </PixelCard>
-
-                        <div className="pt-8 text-center">
-                            <Button variant="danger" onClick={() => { if (confirm("RESET ALL DATA?")) { setPlayers([]); setMatches([]); window.location.reload(); } }}>FACTORY RESET</Button>
+                                <div className="flex gap-2 mb-4">
+                                    <div className="flex-1">
+                                        <Input label="MINUTES" type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button onClick={startTimer} variant="success">START</Button>
+                                    <Button onClick={stopTimer} variant="danger">STOP/RESET</Button>
+                                </div>
+                            </PixelCard>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {tab === 'manage' && (
-                    <div className="space-y-6">
-                        <PixelCard title="UPDATE SCORES">
-                            {/* Toggle Scoring Mode */}
-                            <div className="flex bg-black border-2 border-retro-text mb-4">
-                                <button
-                                    className={`flex-1 py-2 font-pixel text-[10px]`}
-                                    style={{ backgroundColor: scoreState.mode === 'individual' ? '#e94560' : 'transparent', color: scoreState.mode === 'individual' ? 'white' : '#6b7280' }}
-                                    onClick={() => setScoreState(prev => ({ ...prev, mode: 'individual' }))}
-                                >
-                                    INDIVIDUAL
-                                </button>
-                                <button
-                                    className={`flex-1 py-2 font-pixel text-[10px] ${tournamentType === '1V1' || tournamentType === 'SWISS' || tournamentType === 'GROUP' ? '' : '' /* reusing logic? no, separate state */} ${/* temporary inline logic for tab-like switch */ 'match' === 'match' ? '' : ''}`}
-                                    style={{ backgroundColor: scoreState.mode === 'match' ? '#e94560' : 'transparent', color: scoreState.mode === 'match' ? 'white' : '#6b7280' }}
-                                    onClick={() => setScoreState(prev => ({ ...prev, mode: 'match' }))}
-                                >
-                                    MATCH MODE
-                                </button>
-                            </div>
-
-                            {/* MATCH MODE UI */}
-                            {scoreState.mode === 'match' && (
-                                <div className="animate-in fade-in">
-                                    <select
-                                        className="w-full bg-gray-900 border-2 border-retro-text p-2 font-mono text-white mb-4"
-                                        value={scoreState.matchId}
-                                        onChange={e => {
-                                            const m = matches.find(match => match.id === e.target.value);
-                                            setScoreState(prev => ({
-                                                ...prev,
-                                                matchId: e.target.value,
-                                                p1: m ? m.score_p1 : '',
-                                                p2: m ? m.score_p2 : ''
-                                            }));
-                                        }}
-                                    >
-                                        <option value="">Select Match...</option>
-                                        {matches.filter(m => m.status === 'pending').map(m => (
-                                            <option key={m.id} value={m.id}>
-                                                R{m.round} - {players.find(p => p.id === m.p1_id)?.name} vs {players.find(p => p.id === m.p2_id)?.name}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {scoreState.matchId && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <div className="flex gap-4 mb-4">
-                                                <div className="flex-1">
-                                                    <label className="text-xs text-neon-cyan block mb-1">
-                                                        {players.find(p => p.id === matches.find(m => m.id === scoreState.matchId).p1_id)?.name}
-                                                    </label>
-                                                    <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p1} onChange={e => setScoreState({ ...scoreState, p1: e.target.value })} />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <label className="text-xs text-neon-cyan block mb-1">
-                                                        {players.find(p => p.id === matches.find(m => m.id === scoreState.matchId).p2_id)?.name}
-                                                    </label>
-                                                    <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p2} onChange={e => setScoreState({ ...scoreState, p2: e.target.value })} />
-                                                </div>
-                                            </div>
-                                            <Button onClick={updateScore} variant="success" className="w-full">SUBMIT RESULT</Button>
-                                        </div>
-                                    )}
+                    {tab === 'people' && (
+                        <div className="space-y-6">
+                            <PixelCard title="ADD PLAYER">
+                                <div className="flex gap-2">
+                                    <div className="flex-1"><Input placeholder="Name" value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} /></div>
+                                    <Button onClick={addPlayer} className="h-[42px] mt-0">ADD</Button>
                                 </div>
-                            )}
-
-                            {/* INDIVIDUAL MODE UI */}
-                            {scoreState.mode === 'individual' && (
-                                <div className="animate-in fade-in space-y-4">
-                                    <div className="text-xs text-gray-400 text-center mb-2 font-mono">QUICK ADD POINTS</div>
+                                <div className="mt-4 flex flex-wrap gap-2">
                                     {players.map(p => (
-                                        <PlayerScoreRow key={p.id} player={p} onUpdate={updateIndividualScore} />
+                                        <span key={p.id} className="text-xs bg-gray-700 px-2 py-1 border border-gray-500 rounded">{p.name}</span>
                                     ))}
                                 </div>
-                            )}
+                            </PixelCard>
 
-                        </PixelCard>
-
-                        <div className="mt-8">
-                            <h3 className="font-pixel text-xs text-gray-500 mb-2">RECENT ACTIVITY</h3>
-                            {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
-                                <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
-                                    R{m.round}: {players.find(p => p.id === m.p1_id)?.name} {m.score_p1}-{m.score_p2} {players.find(p => p.id === m.p2_id)?.name}
+                            <PixelCard title="GENERATE SCHEDULE">
+                                <p className="text-gray-400 text-xs mb-4">Select format based on player count ({players.length}).</p>
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === '1V1' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
+                                        <input type="radio" name="ttype" checked={tournamentType === '1V1'} onChange={() => setTournamentType('1V1')} />
+                                        <span className="font-pixel text-xs">1V1 (Single Elim Round 1)</span>
+                                    </label>
+                                    <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === 'SWISS' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
+                                        <input type="radio" name="ttype" checked={tournamentType === 'SWISS'} onChange={() => setTournamentType('SWISS')} />
+                                        <span className="font-pixel text-xs">SWISS (High Scores vs High)</span>
+                                    </label>
+                                    <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === 'GROUP' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
+                                        <input type="radio" name="ttype" checked={tournamentType === 'GROUP'} onChange={() => setTournamentType('GROUP')} />
+                                        <span className="font-pixel text-xs">GROUP (Round Robin)</span>
+                                    </label>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-                {tab === 'broadcast' && (
-                    <div className="space-y-6">
-                        <PixelCard title="BROADCAST SYSTEM">
-                            <div className="mb-4">
-                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">MESSAGE CONTENT</label>
-                                <textarea
-                                    value={broadcastMsg}
-                                    onChange={e => setBroadcastMsg(e.target.value)}
-                                    placeholder="Enter message to broadcast..."
-                                    className="w-full h-32 bg-gray-900 border-2 border-retro-text p-4 font-pixel text-white focus:outline-none focus:border-neon-pink shadow-pixel-sm resize-none"
-                                />
+                                <Button onClick={generateSchedule} variant="primary" className="w-full">GENERATE</Button>
+                            </PixelCard>
+
+                            <div className="pt-8 text-center">
+                                <Button variant="danger" onClick={() => { if (confirm("RESET ALL DATA?")) { setPlayers([]); setMatches([]); window.location.reload(); } }}>FACTORY RESET</Button>
                             </div>
+                        </div>
+                    )}
 
-                            <div className="mb-6">
-                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">RECIPIENTS</label>
-                                <div className="flex gap-4 mb-4">
-                                    <label className={`flex-1 border-2 p-3 flex items-center justify-center gap-2 cursor-pointer ${broadcastTarget === 'all' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
-                                        <input type="radio" checked={broadcastTarget === 'all'} onChange={() => setBroadcastTarget('all')} className="hidden" />
-                                        <span className="font-pixel text-xs">ALL PLAYERS</span>
-                                    </label>
-                                    <label className={`flex-1 border-2 p-3 flex items-center justify-center gap-2 cursor-pointer ${broadcastTarget === 'select' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
-                                        <input type="radio" checked={broadcastTarget === 'select'} onChange={() => setBroadcastTarget('select')} className="hidden" />
-                                        <span className="font-pixel text-xs">SELECT PLAYERS</span>
-                                    </label>
+                    {tab === 'manage' && (
+                        <div className="space-y-6">
+                            <PixelCard title="UPDATE SCORES">
+                                {/* Toggle Scoring Mode */}
+                                <div className="flex bg-black border-2 border-retro-text mb-4">
+                                    <button
+                                        className={`flex-1 py-2 font-pixel text-[10px]`}
+                                        style={{ backgroundColor: scoreState.mode === 'individual' ? '#e94560' : 'transparent', color: scoreState.mode === 'individual' ? 'white' : '#6b7280' }}
+                                        onClick={() => setScoreState(prev => ({ ...prev, mode: 'individual' }))}
+                                    >
+                                        INDIVIDUAL
+                                    </button>
+                                    <button
+                                        className={`flex-1 py-2 font-pixel text-[10px] ${tournamentType === '1V1' || tournamentType === 'SWISS' || tournamentType === 'GROUP' ? '' : '' /* reusing logic? no, separate state */} ${/* temporary inline logic for tab-like switch */ 'match' === 'match' ? '' : ''}`}
+                                        style={{ backgroundColor: scoreState.mode === 'match' ? '#e94560' : 'transparent', color: scoreState.mode === 'match' ? 'white' : '#6b7280' }}
+                                        onClick={() => setScoreState(prev => ({ ...prev, mode: 'match' }))}
+                                    >
+                                        MATCH MODE
+                                    </button>
                                 </div>
 
-                                {broadcastTarget === 'select' && (
-                                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-700 bg-black/30">
+                                {/* MATCH MODE UI */}
+                                {scoreState.mode === 'match' && (
+                                    <div className="animate-in fade-in">
+                                        <select
+                                            className="w-full bg-gray-900 border-2 border-retro-text p-2 font-mono text-white mb-4"
+                                            value={scoreState.matchId}
+                                            onChange={e => {
+                                                const m = matches.find(match => match.id === e.target.value);
+                                                setScoreState(prev => ({
+                                                    ...prev,
+                                                    matchId: e.target.value,
+                                                    p1: m ? m.score_p1 : '',
+                                                    p2: m ? m.score_p2 : ''
+                                                }));
+                                            }}
+                                        >
+                                            <option value="">Select Match...</option>
+                                            {matches.filter(m => m.status === 'pending').map(m => (
+                                                <option key={m.id} value={m.id}>
+                                                    R{m.round} - {players.find(p => p.id === m.p1_id)?.name} vs {players.find(p => p.id === m.p2_id)?.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        {scoreState.matchId && (
+                                            <div className="animate-in fade-in slide-in-from-top-2">
+                                                <div className="flex gap-4 mb-4">
+                                                    <div className="flex-1">
+                                                        <label className="text-xs text-neon-cyan block mb-1">
+                                                            {players.find(p => p.id === matches.find(m => m.id === scoreState.matchId).p1_id)?.name}
+                                                        </label>
+                                                        <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p1} onChange={e => setScoreState({ ...scoreState, p1: e.target.value })} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="text-xs text-neon-cyan block mb-1">
+                                                            {players.find(p => p.id === matches.find(m => m.id === scoreState.matchId).p2_id)?.name}
+                                                        </label>
+                                                        <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p2} onChange={e => setScoreState({ ...scoreState, p2: e.target.value })} />
+                                                    </div>
+                                                </div>
+                                                <Button onClick={updateScore} variant="success" className="w-full">SUBMIT RESULT</Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* INDIVIDUAL MODE UI */}
+                                {scoreState.mode === 'individual' && (
+                                    <div className="animate-in fade-in space-y-4">
+                                        <div className="text-xs text-gray-400 text-center mb-2 font-mono">QUICK ADD POINTS</div>
                                         {players.map(p => (
-                                            <label key={p.id} className={`flex items-center gap-2 p-2 border cursor-pointer hover:bg-gray-800 ${selectedPlayers.includes(p.id) ? 'border-neon-pink bg-pink-900/20' : 'border-gray-700'}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedPlayers.includes(p.id)}
-                                                    onChange={e => {
-                                                        if (e.target.checked) setSelectedPlayers([...selectedPlayers, p.id]);
-                                                        else setSelectedPlayers(selectedPlayers.filter(id => id !== p.id));
-                                                    }}
-                                                    className="accent-neon-pink"
-                                                />
-                                                <span className="font-mono text-xs truncate">{p.name}</span>
-                                            </label>
+                                            <PlayerScoreRow key={p.id} player={p} onUpdate={updateIndividualScore} />
                                         ))}
                                     </div>
                                 )}
-                            </div>
 
-                            <Button onClick={handleSendBroadcast} className="w-full py-4 text-base" variant="secondary">
-                                <Icons.Radio className="inline mr-2" /> SEND BROADCAST
-                            </Button>
-                        </PixelCard>
-                    </div>
-                )}
+                            </PixelCard>
+
+                            <div className="mt-8">
+                                <h3 className="font-pixel text-xs text-gray-500 mb-2">RECENT ACTIVITY</h3>
+                                {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
+                                    <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
+                                        R{m.round}: {players.find(p => p.id === m.p1_id)?.name} {m.score_p1}-{m.score_p2} {players.find(p => p.id === m.p2_id)?.name}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {tab === 'broadcast' && (
+                        <div className="space-y-6">
+                            <PixelCard title="BROADCAST SYSTEM">
+                                <div className="mb-4">
+                                    <label className="font-pixel text-xs text-neon-cyan mb-2 block">MESSAGE CONTENT</label>
+                                    <textarea
+                                        value={broadcastMsg}
+                                        onChange={e => setBroadcastMsg(e.target.value)}
+                                        placeholder="Enter message to broadcast..."
+                                        className="w-full h-32 bg-gray-900 border-2 border-retro-text p-4 font-pixel text-white focus:outline-none focus:border-neon-pink shadow-pixel-sm resize-none"
+                                    />
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="font-pixel text-xs text-neon-cyan mb-2 block">RECIPIENTS</label>
+                                    <div className="flex gap-4 mb-4">
+                                        <label className={`flex-1 border-2 p-3 flex items-center justify-center gap-2 cursor-pointer ${broadcastTarget === 'all' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
+                                            <input type="radio" checked={broadcastTarget === 'all'} onChange={() => setBroadcastTarget('all')} className="hidden" />
+                                            <span className="font-pixel text-xs">ALL PLAYERS</span>
+                                        </label>
+                                        <label className={`flex-1 border-2 p-3 flex items-center justify-center gap-2 cursor-pointer ${broadcastTarget === 'select' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
+                                            <input type="radio" checked={broadcastTarget === 'select'} onChange={() => setBroadcastTarget('select')} className="hidden" />
+                                            <span className="font-pixel text-xs">SELECT PLAYERS</span>
+                                        </label>
+                                    </div>
+
+                                    {broadcastTarget === 'select' && (
+                                        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-700 bg-black/30">
+                                            {players.map(p => (
+                                                <label key={p.id} className={`flex items-center gap-2 p-2 border cursor-pointer hover:bg-gray-800 ${selectedPlayers.includes(p.id) ? 'border-neon-pink bg-pink-900/20' : 'border-gray-700'}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedPlayers.includes(p.id)}
+                                                        onChange={e => {
+                                                            if (e.target.checked) setSelectedPlayers([...selectedPlayers, p.id]);
+                                                            else setSelectedPlayers(selectedPlayers.filter(id => id !== p.id));
+                                                        }}
+                                                        className="accent-neon-pink"
+                                                    />
+                                                    <span className="font-mono text-xs truncate">{p.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <Button onClick={handleSendBroadcast} className="w-full py-4 text-base" variant="secondary">
+                                    <Icons.Radio className="inline mr-2" /> SEND BROADCAST
+                                </Button>
+                            </PixelCard>
+                        </div>
+                    )}
                 </div>
             </div>
 
