@@ -70,7 +70,7 @@ function BroadcastOverlay({ messages, currentPlayerId }) {
                     onClick={() => setCurrentMsg(null)}
                     className="bg-retro-accent text-white font-pixel text-xl px-8 py-4 border-4 border-white hover:bg-white hover:text-black hover:scale-105 active:scale-95 transition-all shadow-pixel"
                 >
-                    OK (CLOSE)
+                    CLOSE
                 </button>
             </div>
         </div>
@@ -138,30 +138,39 @@ function Input({ label, value, onChange, type = "text", placeholder }) {
 
 // --- Feature Components ---
 
-function CountdownDisplay({ targetTime }) {
-    const [timeLeft, setTimeLeft] = useState(0);
+function CountdownDisplay({ targetTime, remainingSeconds, isRunning }) {
+    const [displayTime, setDisplayTime] = useState(remainingSeconds || 0);
 
     useEffect(() => {
+        if (!isRunning) {
+            setDisplayTime(remainingSeconds || 0);
+            return;
+        }
+
         if (!targetTime) return;
+
         const interval = setInterval(() => {
             const now = Date.now();
             const diff = Math.max(0, Math.floor((targetTime - now) / 1000));
-            setTimeLeft(diff);
+            setDisplayTime(diff);
             if (diff <= 0) clearInterval(interval);
         }, 1000);
         return () => clearInterval(interval);
-    }, [targetTime]);
+    }, [targetTime, remainingSeconds, isRunning]);
 
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
+    const h = Math.floor(displayTime / 3600);
+    const m = Math.floor((displayTime % 3600) / 60);
+    const s = displayTime % 60;
 
-    if (!targetTime || timeLeft <= 0) {
-        return <div className="text-4xl font-pixel text-gray-600 animate-pulse">00:00</div>;
+    const formatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+    if ((!targetTime && !remainingSeconds) || displayTime <= 0) {
+        return <div className="text-4xl font-pixel text-gray-600 animate-pulse">00:00:00</div>;
     }
 
     return (
-        <div className={`text-6xl font-pixel ${timeLeft < 60 ? 'text-red-500 animate-pulse-fast' : 'text-neon-green'}`}>
-            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        <div className={`text-5xl font-pixel ${displayTime < 60 ? 'text-red-500 animate-pulse-fast' : 'text-neon-green'}`}>
+            {formatted}
         </div>
     );
 }
@@ -362,7 +371,11 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                 {tab === 'timer' && (
                     <div className="h-full flex flex-col justify-center items-center p-8 text-center bg-retro-bg">
                         <h1 className="text-2xl font-pixel text-white mb-8"> MATCH TIME</h1>
-                        <CountdownDisplay targetTime={timerStats?.targetTime} />
+                        <CountdownDisplay
+                            targetTime={timerStats?.targetTime}
+                            remainingSeconds={timerStats?.remainingSeconds}
+                            isRunning={timerStats?.isRunning}
+                        />
 
                     </div>
                 )}
@@ -692,16 +705,48 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                         <div className="space-y-6">
                             <PixelCard title="TIMER CONTROL">
                                 <div className="text-center mb-4">
-                                    <CountdownDisplay targetTime={timerStats?.targetTime} />
+                                    <CountdownDisplay
+                                        targetTime={timerStats?.targetTime}
+                                        remainingSeconds={timerStats?.remainingSeconds}
+                                        isRunning={timerStats?.isRunning}
+                                    />
                                 </div>
                                 <div className="flex gap-2 mb-4">
                                     <div className="flex-1">
-                                        <Input label="MINUTES" type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
+                                        <Input label="SET MINUTES" type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button onClick={startTimer} variant="success">START</Button>
-                                    <Button onClick={stopTimer} variant="danger">STOP/RESET</Button>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Button
+                                        onClick={() => {
+                                            const seconds = (timerStats?.isRunning ? 0 : (timerStats?.remainingSeconds || minutesInput * 60));
+                                            const target = Date.now() + (seconds * 1000);
+                                            setTimerStats({ ...timerStats, targetTime: target, isRunning: true });
+                                            setToast({ message: "Timer Started!", type: "success" });
+                                        }}
+                                        variant="success"
+                                        disabled={timerStats?.isRunning}
+                                    >START</Button>
+
+                                    <Button
+                                        onClick={() => {
+                                            if (!timerStats?.isRunning) return;
+                                            const now = Date.now();
+                                            const remaining = Math.max(0, Math.floor((timerStats.targetTime - now) / 1000));
+                                            setTimerStats({ ...timerStats, targetTime: null, remainingSeconds: remaining, isRunning: false });
+                                            setToast({ message: "Timer Paused!", type: "warning" });
+                                        }}
+                                        variant="primary"
+                                        disabled={!timerStats?.isRunning}
+                                    >STOP</Button>
+
+                                    <Button
+                                        onClick={() => {
+                                            setTimerStats({ targetTime: null, remainingSeconds: minutesInput * 60, isRunning: false });
+                                            setToast({ message: "Timer Reset!", type: "error" });
+                                        }}
+                                        variant="danger"
+                                    >RESET</Button>
                                 </div>
                             </PixelCard>
                         </div>
@@ -955,7 +1000,7 @@ function App() {
     const [roomDraftPlayer, setRoomDraftPlayer] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
     const [players, setPlayers] = useState([]);
     const [matches, setMatches] = useState([]);
-    const [timerStats, setTimerStats] = useState({ targetTime: null, isRunning: false });
+    const [timerStats, setTimerStats] = useState({ targetTime: null, isRunning: false, remainingSeconds: 0 });
     const [messages, setMessages] = useState([]);
     const [currentPlayerId, setCurrentPlayerId] = useState(null);
     const [toast, setToast] = useState(null);
@@ -1057,7 +1102,7 @@ function App() {
         const onTimer = (snap) => {
             hydrationRef.current.timer = true;
             syncFlagsRef.current.timer = true;
-            setTimerStats(snap.val() || { targetTime: null, isRunning: false });
+            setTimerStats(snap.val() || { targetTime: null, isRunning: false, remainingSeconds: 0 });
             updateRoomReady();
         };
         const onMessages = (snap) => {
