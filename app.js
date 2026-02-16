@@ -1273,6 +1273,10 @@ function App() {
     }, [lang]);
 
     useEffect(() => {
+        document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-TW');
+    }, [lang]);
+
+    useEffect(() => {
         try {
             if (!window.firebase) {
                 setFirebaseStatus({ ready: false, error: "Firebase SDK not loaded." });
