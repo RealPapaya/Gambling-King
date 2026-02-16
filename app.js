@@ -38,6 +38,10 @@ const I18N = {
         firebase_error: "錯誤",
         room: "房間",
         room_code: "房號",
+        room_password: "房間密碼",
+        password_placeholder: "請輸入密碼",
+        password_required: "請輸入房間密碼。",
+        password_incorrect: "房間密碼錯誤。",
         scorer_title: "記分員",
         scorer_desc: "建立 4 碼房號",
         player_title: "玩家",
@@ -151,6 +155,10 @@ const I18N = {
         firebase_error: "ERROR",
         room: "ROOM",
         room_code: "ROOM CODE",
+        room_password: "ROOM PASSWORD",
+        password_placeholder: "Enter password",
+        password_required: "Room password required.",
+        password_incorrect: "Incorrect room password.",
         scorer_title: "Scorer",
         scorer_desc: "Create a 4-digit room code",
         player_title: "Player",
@@ -316,6 +324,7 @@ const Icons = {
     User: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
     Users: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
     Radio: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" /><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" /><circle cx="12" cy="12" r="2" /><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" /><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" /></svg>,
+    Eye: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>,
 };
 
 // --- Common Components ---
@@ -832,7 +841,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
     );
 }
 
-function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady, firebaseStatus, t }) {
+function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady, firebaseStatus, t, scorerPin }) {
     const [tab, setTab] = useState('manage'); // manage, timer, players, schedule, broadcast
     const [minutesInput, setMinutesInput] = useState(10);
     const [scoreState, setScoreState] = useState({ matchId: '', p1: '', p2: '', mode: 'individual' });
@@ -842,6 +851,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
     const [selectedPlayers, setSelectedPlayers] = useState([]);
     const [editingPlayerId, setEditingPlayerId] = useState(null);
     const [editingName, setEditingName] = useState("");
+    const [showPin, setShowPin] = useState(false);
 
     const handleSendBroadcast = () => {
         if (!broadcastMsg.trim()) return;
@@ -1099,17 +1109,32 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
 
     return (
         <div className="flex flex-col h-full bg-gray-900 border-x-4 border-retro-text">
-            <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-800">
-                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; {t ? t('exit') : 'EXIT'}</Button>
-                <div className="flex flex-col items-center">
-                    <span className="font-pixel text-xs text-yellow-400">{t ? t('scorer_admin') : 'SCORER ADMIN'}</span>
-                    {roomCode && <span className="text-[10px] text-neon-cyan">{t ? t('room') : 'ROOM'} {roomCode}</span>}
-                    <span className={`text-[9px] ${firebaseStatus?.ready ? 'text-neon-green' : 'text-red-400'}`}>
-                        {t ? t('firebase_status', { status: firebaseStatus?.ready ? t('firebase_ready') : t('firebase_error') }) : `FB ${firebaseStatus?.ready ? 'READY' : 'ERROR'}`}
-                    </span>
+                <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-800">
+                    <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; {t ? t('exit') : 'EXIT'}</Button>
+                    <div className="flex flex-col items-center">
+                        <span className="font-pixel text-xs text-yellow-400">{t ? t('scorer_admin') : 'SCORER ADMIN'}</span>
+                        {roomCode && <span className="text-[10px] text-neon-cyan">{t ? t('room') : 'ROOM'} {roomCode}</span>}
+                        <span className={`text-[9px] ${firebaseStatus?.ready ? 'text-neon-green' : 'text-red-400'}`}>
+                            {t ? t('firebase_status', { status: firebaseStatus?.ready ? t('firebase_ready') : t('firebase_error') }) : `FB ${firebaseStatus?.ready ? 'READY' : 'ERROR'}`}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type={showPin ? "text" : "password"}
+                            value={scorerPin || ""}
+                            readOnly
+                            placeholder="----"
+                            className="w-24 bg-gray-900 border-2 border-retro-text p-1 text-[10px] font-mono text-white text-center focus:outline-none"
+                        />
+                        <button
+                            onClick={() => setShowPin(prev => !prev)}
+                            className="p-1 border-2 border-retro-text text-neon-cyan hover:bg-gray-700"
+                            aria-label="Toggle password visibility"
+                        >
+                            <Icons.Eye size={14} />
+                        </button>
+                    </div>
                 </div>
-                <span className="w-16"></span>
-            </div>
 
             <div className="flex-1 overflow-y-auto p-4 reltive">
                 {!roomReady && (
@@ -1418,6 +1443,7 @@ function App() {
     const [viewMode, setViewMode] = useState('select'); // select, scorer, contestant
     const [roomCode, setRoomCode] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
     const [roomDraftScorer, setRoomDraftScorer] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
+    const [roomPasswordScorer, setRoomPasswordScorer] = useState("");
     const [roomDraftPlayer, setRoomDraftPlayer] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
     const [players, setPlayers] = useState([]);
     const [matches, setMatches] = useState([]);
@@ -1426,13 +1452,14 @@ function App() {
     const [currentPlayerId, setCurrentPlayerId] = useState(null);
     const [toast, setToast] = useState(null);
     const [firebaseStatus, setFirebaseStatus] = useState({ ready: false, error: null });
+    const [scorerPin, setScorerPin] = useState("");
     const firebaseDbRef = useRef(null);
     const syncFlagsRef = useRef({ players: false, matches: false, timer: false, messages: false });
     const hydrationRef = useRef({ players: false, matches: false, timer: false, messages: false });
     const [roomReady, setRoomReady] = useState(false);
     const [lang, setLang] = useState(() => {
-        const stored = getLocalStorage("gk_lang", "zh");
-        return stored === "en" ? "en" : "zh";
+        const stored = getLocalStorage("gk_lang", "en");
+        return stored === "zh" ? "zh" : "en";
     });
     const [clientId] = useState(() => {
         let existing = getLocalStorage("gk_client_id", null);
@@ -1493,6 +1520,12 @@ function App() {
 
     useEffect(() => {
         if (roomCode) setLocalStorage("gk_last_room", roomCode);
+    }, [roomCode]);
+
+    useEffect(() => {
+        if (!roomCode) return;
+        const storedPin = getLocalStorage(`gk_${roomCode}_pin`, "");
+        if (storedPin) setScorerPin(storedPin);
     }, [roomCode]);
 
     useEffect(() => {
@@ -1687,13 +1720,30 @@ function App() {
             setToast({ message: msg, type: "error" });
             return;
         }
+        const pin = roomPasswordScorer.trim();
+        if (!pin) {
+            setToast({ message: t('password_required'), type: "error" });
+            return;
+        }
         try {
             const metaRef = firebaseDbRef.current.ref(`rooms/${code}/meta`);
-            const snap = await metaRef.once('value');
-            if (!snap.exists()) {
+            const pinRef = firebaseDbRef.current.ref(`rooms/${code}/scorerPin`);
+            const [metaSnap, pinSnap] = await Promise.all([
+                metaRef.once('value'),
+                pinRef.once('value')
+            ]);
+            if (!metaSnap.exists()) {
                 await metaRef.set({ createdAt: window.firebase.database.ServerValue.TIMESTAMP });
             }
+            if (!pinSnap.exists()) {
+                await pinRef.set(pin);
+            } else if (pinSnap.val() !== pin) {
+                setToast({ message: t('password_incorrect'), type: "error" });
+                return;
+            }
             setRoomCode(code);
+            setScorerPin(pin);
+            setLocalStorage(`gk_${code}_pin`, pin);
             setViewMode('scorer');
         } catch (error) {
             const codeMsg = error?.code || error?.message || 'unknown';
@@ -1747,46 +1797,54 @@ function App() {
                         <p className="font-pixel text-xs text-neon-pink">{t('app_subtitle')}</p>
                     </div>
 
-                    <div className="z-10 flex items-center gap-2 text-[10px] font-pixel">
-                        <span className="text-gray-400">{t('language')}:</span>
-                        <button
-                            onClick={() => setLang('zh')}
-                            className={`px-2 py-1 border ${lang === 'zh' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
-                        >
-                            {t('lang_zh')}
-                        </button>
-                        <button
-                            onClick={() => setLang('en')}
-                            className={`px-2 py-1 border ${lang === 'en' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
-                        >
-                            {t('lang_en')}
-                        </button>
-                    </div>
+                        <div className="z-10 flex items-center gap-3 text-xs font-pixel">
+                            <span className="text-gray-400">{t('language')}:</span>
+                            <button
+                                onClick={() => setLang('zh')}
+                                className={`px-4 py-2 border ${lang === 'zh' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
+                            >
+                                {t('lang_zh')}
+                            </button>
+                            <button
+                                onClick={() => setLang('en')}
+                                className={`px-4 py-2 border ${lang === 'en' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
+                            >
+                                {t('lang_en')}
+                            </button>
+                        </div>
 
                     <div className="w-full space-y-6 z-10">
-                        <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Icons.Users className="text-neon-cyan" size={36} />
-                                <div>
-                                    <div className="text-lg font-pixel text-neon-cyan">{t('scorer_title')}</div>
-                                    <div className="text-[10px] text-gray-400 font-mono">{t('scorer_desc')}</div>
+                            <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Icons.Users className="text-neon-cyan" size={36} />
+                                    <div>
+                                        <div className="text-lg font-pixel text-neon-cyan">{t('scorer_title')}</div>
+                                        <div className="text-[10px] text-gray-400 font-mono">{t('scorer_desc')}</div>
+                                    </div>
                                 </div>
+                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={4}
+                                    value={roomDraftScorer}
+                                    onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
+                                    placeholder="1234"
+                                    className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                                />
+                                <label className="font-pixel text-xs text-neon-cyan mt-4 mb-2 block">{t('room_password')}</label>
+                                <input
+                                    type="password"
+                                    value={roomPasswordScorer}
+                                    onChange={e => setRoomPasswordScorer(e.target.value)}
+                                    placeholder={t('password_placeholder')}
+                                    className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                                />
+                                <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
+                                    {t('enter_scorer')}
+                                </Button>
                             </div>
-                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
-                            <input
-                                type="tel"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                maxLength={4}
-                                value={roomDraftScorer}
-                                onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
-                                placeholder="1234"
-                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
-                            />
-                            <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
-                                {t('enter_scorer')}
-                            </Button>
-                        </div>
 
                         <div className="w-full bg-retro-card border-4 border-neon-green p-5">
                             <div className="flex items-center gap-3 mb-4">
@@ -1840,23 +1898,24 @@ function App() {
                     />
                 )}
 
-            {viewMode === 'scorer' && (
-                <ScorerScreen
-                    players={players}
-                    matches={matches}
-                    setPlayers={setPlayers}
-                    setMatches={setMatches}
-                    timerStats={timerStats}
-                    setTimerStats={setTimerStats}
-                    onBack={goBack}
-                    setToast={setToast}
-                    onSendMessage={handleSendMessage}
-                    roomCode={roomCode}
-                    roomReady={roomReady}
-                    firebaseStatus={firebaseStatus}
-                    t={t}
-                />
-            )}
+                {viewMode === 'scorer' && (
+                    <ScorerScreen
+                        players={players}
+                        matches={matches}
+                        setPlayers={setPlayers}
+                        setMatches={setMatches}
+                        timerStats={timerStats}
+                        setTimerStats={setTimerStats}
+                        onBack={goBack}
+                        setToast={setToast}
+                        onSendMessage={handleSendMessage}
+                        roomCode={roomCode}
+                        roomReady={roomReady}
+                        firebaseStatus={firebaseStatus}
+                        t={t}
+                        scorerPin={scorerPin}
+                    />
+                )}
         </div>
     );
 }
