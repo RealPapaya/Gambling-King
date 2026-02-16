@@ -1,9 +1,10 @@
-// Global variables to avoid scope issues
+﻿// Global variables to avoid scope issues
 const { useState, useEffect, useMemo, useRef } = React;
 
 // --- Utils ---
 function generateId() { return Math.random().toString(36).substr(2, 9); }
 function getLocalStorage(key, initial) {
+    if (!key) return initial;
     try {
         const item = window.localStorage.getItem(key);
         return item ? JSON.parse(item) : initial;
@@ -13,20 +14,31 @@ function getLocalStorage(key, initial) {
     }
 }
 function setLocalStorage(key, value) {
+    if (!key) return;
     try {
         window.localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
         console.error(error);
     }
 }
+function normalizeRoomCode(value) {
+    return (value || '').toString().replace(/\D/g, '').slice(0, 4);
+}
 
 // --- Common Components ---
-function BroadcastOverlay({ messages }) {
+function BroadcastOverlay({ messages, currentPlayerId }) {
     const [currentMsg, setCurrentMsg] = useState(null);
 
     useEffect(() => {
         if (!messages || messages.length === 0) return;
-        const lastMsg = messages[messages.length - 1];
+        const isTargeted = (msg) => {
+            if (!msg || !msg.targets || msg.targets.length === 0) return true;
+            if (msg.targets.includes('all')) return true;
+            if (!currentPlayerId) return false;
+            return msg.targets.includes(currentPlayerId);
+        };
+        const lastMsg = [...messages].reverse().find(isTargeted);
+        if (!lastMsg) return;
 
         // If we're already showing this message, do nothing
         if (currentMsg && currentMsg.id === lastMsg.id) return;
@@ -40,7 +52,7 @@ function BroadcastOverlay({ messages }) {
             const timer = setTimeout(() => setCurrentMsg(null), 8000);
             return () => clearTimeout(timer);
         }
-    }, [messages]);
+    }, [messages, currentPlayerId]);
 
     if (!currentMsg) return null;
 
@@ -292,15 +304,63 @@ function PlayerScoreRow({ player, onUpdate }) {
     );
 }
 
-function ContestantScreen({ players, matches, timerStats, onBack, messages }) {
+function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode }) {
     const [tab, setTab] = useState('timer'); // timer, bracket, rank
+
+    if (!currentPlayerId) {
+        return (
+            <div className="flex flex-col h-full">
+                <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
+                    <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
+                    <div className="flex flex-col items-center">
+                        <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
+                        {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                    </div>
+                    <span className="w-16"></span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 bg-retro-bg">
+                    <PixelCard title="SELECT YOUR NAME">
+                        {players.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2">
+                                {players.map(p => (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => setCurrentPlayerId(p.id)}
+                                        className="bg-gray-800 border-2 border-retro-text px-2 py-3 font-pixel text-[10px] text-neon-cyan hover:bg-gray-700 active:scale-95 transition"
+                                    >
+                                        <span className="block truncate">{p.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-xs text-gray-500 font-mono py-6">
+                                Waiting for scorer to add players.
+                            </div>
+                        )}
+                    </PixelCard>
+
+                    <PixelCard title="ROOM CODE" className="mt-6">
+                        <div className="text-center">
+                            <div className="font-pixel text-3xl text-yellow-400 tracking-[0.3em]">{roomCode || '----'}</div>
+                            <div className="text-[10px] text-gray-500 mt-3">Ask the scorer to use this 4-digit code.</div>
+                        </div>
+                    </PixelCard>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full">
-            <BroadcastOverlay messages={messages} />
+            <BroadcastOverlay messages={messages} currentPlayerId={currentPlayerId} />
             <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
                 <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
-                <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
+                <div className="flex flex-col items-center">
+                    <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
+                    {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                </div>
+                <button onClick={() => setCurrentPlayerId(null)} className="text-[10px] text-gray-400 hover:text-white px-2">CHANGE NAME</button>
             </div>
 
             <div className="flex-1 overflow-hidden relative">
@@ -319,15 +379,19 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages }) {
                 {tab === 'rank' && (
                     <div className="h-full bg-retro-bg p-2 overflow-y-auto">
                         <h2 className="text-center font-pixel text-neon-green py-4 text-xl">LEADERBOARD</h2>
-                        {players.sort((a, b) => b.score - a.score).map((p, i) => (
-                            <div key={p.id} className="mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
-                                    <span className="font-pixel text-sm text-neon-cyan">{p.name}</span>
+                        {[...players].sort((a, b) => b.score - a.score).map((p, i) => {
+                            const isMe = currentPlayerId && p.id === currentPlayerId;
+                            return (
+                                <div key={p.id} className={`mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between ${isMe ? 'border-neon-green bg-green-900/40 shadow-[0_0_12px_rgba(0,255,65,0.35)]' : ''}`}>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
+                                        <span className={`font-pixel text-sm ${isMe ? 'text-neon-green' : 'text-neon-cyan'}`}>{p.name}</span>
+                                        {isMe && <span className="text-[9px] text-neon-green border border-neon-green px-1 py-0.5">YOU</span>}
+                                    </div>
+                                    <span className="font-pixel text-xl text-neon-pink">{p.score}</span>
                                 </div>
-                                <span className="font-pixel text-xl text-neon-pink">{p.score}</span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -347,7 +411,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages }) {
     );
 }
 
-function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage }) {
+function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode }) {
     const [tab, setTab] = useState('manage'); // manage, timer, people, broadcast
     const [minutesInput, setMinutesInput] = useState(10);
     const [scoreState, setScoreState] = useState({ matchId: '', p1: '', p2: '', mode: 'individual' });
@@ -550,7 +614,11 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
         <div className="flex flex-col h-full bg-gray-900 border-x-4 border-retro-text">
             <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-800">
                 <button onClick={onBack} className="text-xs text-gray-400 hover:text-white px-2">&lt; EXIT</button>
-                <span className="font-pixel text-xs text-yellow-400">SCORER ADMIN</span>
+                <div className="flex flex-col items-center">
+                    <span className="font-pixel text-xs text-yellow-400">SCORER ADMIN</span>
+                    {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                </div>
+                <span className="w-16"></span>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 reltive">
@@ -777,41 +845,167 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
 
 function App() {
     const [viewMode, setViewMode] = useState('select'); // select, scorer, contestant
-    const [players, setPlayers] = useState(() => getLocalStorage("gk_players", []));
-    const [matches, setMatches] = useState(() => getLocalStorage("gk_matches", []));
-    const [timerStats, setTimerStats] = useState(() => getLocalStorage("gk_timer", { targetTime: null, isRunning: false }));
-    const [messages, setMessages] = useState(() => getLocalStorage("gk_messages", []));
+    const [roomCode, setRoomCode] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
+    const [roomDraftScorer, setRoomDraftScorer] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
+    const [roomDraftPlayer, setRoomDraftPlayer] = useState(() => normalizeRoomCode(getLocalStorage("gk_last_room", "")));
+    const [players, setPlayers] = useState([]);
+    const [matches, setMatches] = useState([]);
+    const [timerStats, setTimerStats] = useState({ targetTime: null, isRunning: false });
+    const [messages, setMessages] = useState([]);
+    const [currentPlayerId, setCurrentPlayerId] = useState(null);
     const [toast, setToast] = useState(null);
+    const [firebaseStatus, setFirebaseStatus] = useState({ ready: false, error: null });
+    const firebaseDbRef = useRef(null);
+    const syncFlagsRef = useRef({ players: false, matches: false, timer: false, messages: false });
+    const hydrationRef = useRef({ players: false, matches: false, timer: false, messages: false });
 
     useEffect(() => {
-        setLocalStorage("gk_players", players);
-    }, [players]);
-
-    useEffect(() => {
-        setLocalStorage("gk_matches", matches);
-    }, [matches]);
-
-    useEffect(() => {
-        setLocalStorage("gk_timer", timerStats);
-    }, [timerStats]);
-
-    useEffect(() => {
-        setLocalStorage("gk_messages", messages);
-    }, [messages]);
-
-    // Cross-tab sync listener
-    useEffect(() => {
-        const handleStorage = (e) => {
-            if (e.key === "gk_messages") {
-                setMessages(JSON.parse(e.newValue || "[]"));
+        try {
+            if (!window.firebase) {
+                setFirebaseStatus({ ready: false, error: "Firebase SDK not loaded." });
+                return;
             }
-            if (e.key === "gk_timer") {
-                setTimerStats(JSON.parse(e.newValue || '{"targetTime": null, "isRunning": false}'));
+            if (!window.FIREBASE_CONFIG) {
+                setFirebaseStatus({ ready: false, error: "Missing Firebase config." });
+                return;
             }
-        };
-        window.addEventListener('storage', handleStorage);
-        return () => window.removeEventListener('storage', handleStorage);
+            if (!window.FIREBASE_CONFIG.databaseURL) {
+                setFirebaseStatus({ ready: false, error: "Firebase config missing databaseURL." });
+                return;
+            }
+            if (!window.firebase.apps || window.firebase.apps.length === 0) {
+                window.firebase.initializeApp(window.FIREBASE_CONFIG);
+            }
+            firebaseDbRef.current = window.firebase.database();
+            setFirebaseStatus({ ready: true, error: null });
+        } catch (error) {
+            setFirebaseStatus({ ready: false, error: error.message || "Firebase init failed." });
+        }
     }, []);
+
+    useEffect(() => {
+        if (roomCode) setLocalStorage("gk_last_room", roomCode);
+    }, [roomCode]);
+
+    useEffect(() => {
+        if (roomCode) {
+            setRoomDraftScorer(roomCode);
+            setRoomDraftPlayer(roomCode);
+        }
+    }, [roomCode]);
+
+    useEffect(() => {
+        if (!roomCode) {
+            setCurrentPlayerId(null);
+            return;
+        }
+        setCurrentPlayerId(getLocalStorage(`gk_${roomCode}_me`, null));
+    }, [roomCode]);
+
+    useEffect(() => {
+        if (!roomCode) return;
+        setLocalStorage(`gk_${roomCode}_me`, currentPlayerId);
+    }, [roomCode, currentPlayerId]);
+
+    useEffect(() => {
+        setPlayers([]);
+        setMatches([]);
+        setTimerStats({ targetTime: null, isRunning: false });
+        setMessages([]);
+        if (!roomCode || !firebaseStatus.ready || !firebaseDbRef.current) {
+            return;
+        }
+
+        syncFlagsRef.current = { players: false, matches: false, timer: false, messages: false };
+        hydrationRef.current = { players: false, matches: false, timer: false, messages: false };
+
+        const basePath = `rooms/${roomCode}`;
+        const playersRef = firebaseDbRef.current.ref(`${basePath}/players`);
+        const matchesRef = firebaseDbRef.current.ref(`${basePath}/matches`);
+        const timerRef = firebaseDbRef.current.ref(`${basePath}/timer`);
+        const messagesRef = firebaseDbRef.current.ref(`${basePath}/messages`);
+
+        const onPlayers = (snap) => {
+            hydrationRef.current.players = true;
+            syncFlagsRef.current.players = true;
+            setPlayers(snap.val() || []);
+        };
+        const onMatches = (snap) => {
+            hydrationRef.current.matches = true;
+            syncFlagsRef.current.matches = true;
+            setMatches(snap.val() || []);
+        };
+        const onTimer = (snap) => {
+            hydrationRef.current.timer = true;
+            syncFlagsRef.current.timer = true;
+            setTimerStats(snap.val() || { targetTime: null, isRunning: false });
+        };
+        const onMessages = (snap) => {
+            hydrationRef.current.messages = true;
+            syncFlagsRef.current.messages = true;
+            setMessages(snap.val() || []);
+        };
+
+        playersRef.on('value', onPlayers);
+        matchesRef.on('value', onMatches);
+        timerRef.on('value', onTimer);
+        messagesRef.on('value', onMessages);
+
+        return () => {
+            playersRef.off('value', onPlayers);
+            matchesRef.off('value', onMatches);
+            timerRef.off('value', onTimer);
+            messagesRef.off('value', onMessages);
+        };
+    }, [roomCode, firebaseStatus.ready]);
+
+    useEffect(() => {
+        if (!roomCode || !firebaseStatus.ready || !firebaseDbRef.current) return;
+        if (!hydrationRef.current.players) return;
+        if (syncFlagsRef.current.players) {
+            syncFlagsRef.current.players = false;
+            return;
+        }
+        firebaseDbRef.current.ref(`rooms/${roomCode}/players`).set(players);
+    }, [roomCode, firebaseStatus.ready, players]);
+
+    useEffect(() => {
+        if (!roomCode || !firebaseStatus.ready || !firebaseDbRef.current) return;
+        if (!hydrationRef.current.matches) return;
+        if (syncFlagsRef.current.matches) {
+            syncFlagsRef.current.matches = false;
+            return;
+        }
+        firebaseDbRef.current.ref(`rooms/${roomCode}/matches`).set(matches);
+    }, [roomCode, firebaseStatus.ready, matches]);
+
+    useEffect(() => {
+        if (!roomCode || !firebaseStatus.ready || !firebaseDbRef.current) return;
+        if (!hydrationRef.current.timer) return;
+        if (syncFlagsRef.current.timer) {
+            syncFlagsRef.current.timer = false;
+            return;
+        }
+        firebaseDbRef.current.ref(`rooms/${roomCode}/timer`).set(timerStats);
+    }, [roomCode, firebaseStatus.ready, timerStats]);
+
+    useEffect(() => {
+        if (!roomCode || !firebaseStatus.ready || !firebaseDbRef.current) return;
+        if (!hydrationRef.current.messages) return;
+        if (syncFlagsRef.current.messages) {
+            syncFlagsRef.current.messages = false;
+            return;
+        }
+        firebaseDbRef.current.ref(`rooms/${roomCode}/messages`).set(messages);
+    }, [roomCode, firebaseStatus.ready, messages]);
+
+    useEffect(() => {
+        if (!currentPlayerId) return;
+        if (players.length === 0) return;
+        if (!players.find(p => p.id === currentPlayerId)) {
+            setCurrentPlayerId(null);
+        }
+    }, [players, currentPlayerId]);
 
     const handleSendMessage = (text, targets, targetNames) => {
         const newMsg = {
@@ -821,7 +1015,7 @@ function App() {
             targetNames,
             timestamp: Date.now()
         };
-        setMessages([...messages, newMsg]);
+        setMessages(prev => [...prev, newMsg]);
     };
 
     useEffect(() => {
@@ -840,9 +1034,36 @@ function App() {
 
 
     const goBack = () => setViewMode('select');
+    const handleEnterScorer = () => {
+        const code = normalizeRoomCode(roomDraftScorer);
+        if (code.length !== 4) {
+            setToast({ message: "Enter a 4-digit room code.", type: "error" });
+            return;
+        }
+        if (!firebaseStatus.ready) {
+            setToast({ message: firebaseStatus.error || "Firebase not ready.", type: "error" });
+            return;
+        }
+        setRoomCode(code);
+        setViewMode('scorer');
+    };
+    const handleEnterPlayer = () => {
+        const code = normalizeRoomCode(roomDraftPlayer);
+        if (code.length !== 4) {
+            setToast({ message: "Enter a 4-digit room code.", type: "error" });
+            return;
+        }
+        if (!firebaseStatus.ready) {
+            setToast({ message: firebaseStatus.error || "Firebase not ready.", type: "error" });
+            return;
+        }
+        setCurrentPlayerId(null);
+        setRoomCode(code);
+        setViewMode('contestant');
+    };
 
     return (
-        <div className="max-w-md mx-auto h-screen bg-retro-bg font-sans bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] text-white overflow-hidden shadow-2xl relative">
+        <div className="max-w-md mx-auto min-h-[100svh] h-[100svh] bg-retro-bg font-sans bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] text-white overflow-hidden shadow-2xl relative">
             {toast && (
                 <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 w-3/4 z-50 p-2 font-pixel text-xs border-2 shadow-pixel text-center animate-in slide-in-from-top-4 fade-in duration-300 ${toast.type === 'error' ? 'bg-red-600 border-white' : 'bg-neon-green border-white text-black'}`}>
                     {toast.message}
@@ -850,7 +1071,7 @@ function App() {
             )}
 
             {viewMode === 'select' && (
-                <div className="h-full flex flex-col justify-center items-center p-6 space-y-8 bg-retro-bg relative">
+                <div className="h-full flex flex-col justify-center items-center p-6 space-y-6 bg-retro-bg relative overflow-y-auto">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-gray-900/60 to-black pointer-events-none"></div>
 
                     <div className="text-center z-10 animate-pulse">
@@ -859,27 +1080,57 @@ function App() {
                     </div>
 
                     <div className="w-full space-y-6 z-10">
-                        <button
-                            onClick={() => setViewMode('scorer')}
-                            className="w-full bg-retro-card border-4 border-neon-cyan p-6 hover:bg-gray-800 active:scale-95 transition-transform group"
-                        >
-                            <Icons.Users className="mx-auto mb-2 text-neon-cyan group-hover:scale-110 transition-transform" size={48} />
-                            <div className="text-xl font-pixel text-neon-cyan">Generate / Scorer</div>
-                            <div className="text-[10px] text-gray-400 mt-2 font-mono">Setup match / Timer / Input Score</div>
-                        </button>
+                        <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
+                            <div className="flex items-center gap-3 mb-4">
+                                <Icons.Users className="text-neon-cyan" size={36} />
+                                <div>
+                                    <div className="text-lg font-pixel text-neon-cyan">記分員 / Scorer</div>
+                                    <div className="text-[10px] text-gray-400 font-mono">Create a 4-digit room code</div>
+                                </div>
+                            </div>
+                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">ROOM CODE</label>
+                            <input
+                                type="tel"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                value={roomDraftScorer}
+                                onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
+                                placeholder="1234"
+                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                            />
+                            <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
+                                ENTER AS SCORER
+                            </Button>
+                        </div>
 
-                        <button
-                            onClick={() => setViewMode('contestant')}
-                            className="w-full bg-retro-card border-4 border-neon-green p-6 hover:bg-gray-800 active:scale-95 transition-transform group"
-                        >
-                            <Icons.Trophy className="mx-auto mb-2 text-neon-green group-hover:scale-110 transition-transform" size={48} />
-                            <div className="text-xl font-pixel text-neon-green">Player Mode</div>
-                            <div className="text-[10px] text-gray-400 mt-2 font-mono">View Schedule / Timer / Rank</div>
-                        </button>
+                        <div className="w-full bg-retro-card border-4 border-neon-green p-5">
+                            <div className="flex items-center gap-3 mb-4">
+                                <Icons.Trophy className="text-neon-green" size={36} />
+                                <div>
+                                    <div className="text-lg font-pixel text-neon-green">玩家 / Player</div>
+                                    <div className="text-[10px] text-gray-400 font-mono">Join an existing room</div>
+                                </div>
+                            </div>
+                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">ROOM CODE</label>
+                            <input
+                                type="tel"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                value={roomDraftPlayer}
+                                onChange={e => setRoomDraftPlayer(normalizeRoomCode(e.target.value))}
+                                placeholder="1234"
+                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                            />
+                            <Button onClick={handleEnterPlayer} className="w-full mt-4" variant="success" disabled={roomDraftPlayer.length !== 4}>
+                                ENTER AS PLAYER
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
-                        SYSTEM READY // WAITING FOR INPUT
+                        SYSTEM READY // ENTER ROOM CODE
                     </div>
                 </div>
             )}
@@ -891,6 +1142,9 @@ function App() {
                     timerStats={timerStats}
                     messages={messages}
                     onBack={goBack}
+                    currentPlayerId={currentPlayerId}
+                    setCurrentPlayerId={setCurrentPlayerId}
+                    roomCode={roomCode}
                 />
             )}
 
@@ -905,6 +1159,7 @@ function App() {
                     onBack={goBack}
                     setToast={setToast}
                     onSendMessage={handleSendMessage}
+                    roomCode={roomCode}
                 />
             )}
         </div>
