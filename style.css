@@ -1,9 +1,13 @@
-@import url('https://cdn.jsdelivr.net/npm/zpix-pixel-font@1.1.8/dist/zpix.css');
+@font-face {
+    font-family: 'Zpix';
+    src: url('https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@latest/dist/Zpix.woff2') format('woff2');
+    font-display: swap;
+}
 
 body {
     background-color: #1a1a2e;
     color: #eeeeee;
-    font-family: 'Zpix', 'Press Start 2P', 'Courier New', Courier, monospace;
+    font-family: 'Zpix', 'Press Start 2P', sans-serif;
 }
 
 #loading-screen {
