@@ -1,5 +1,5 @@
 ﻿// Global variables to avoid scope issues
-const { useState, useEffect, useMemo, useRef } = React;
+const { useState, useEffect, useMemo, useRef, useLayoutEffect } = React;
 
 // --- Utils ---
 function generateId() { return Math.random().toString(36).substr(2, 9); }
@@ -537,9 +537,81 @@ function PlayerScoreRow({ player, onUpdate, t }) {
     );
 }
 
+function AnimatedNumber({ value, duration = 350, className = "" }) {
+    const [displayValue, setDisplayValue] = useState(value);
+    const prevValueRef = useRef(value);
+    const rafRef = useRef(null);
+
+    useEffect(() => {
+        const from = prevValueRef.current;
+        const to = value;
+        if (from === to) return;
+
+        const start = performance.now();
+        const animate = (now) => {
+            const progress = Math.min(1, (now - start) / duration);
+            const current = Math.round(from + (to - from) * progress);
+            setDisplayValue(current);
+            if (progress < 1) {
+                rafRef.current = requestAnimationFrame(animate);
+            } else {
+                prevValueRef.current = to;
+            }
+        };
+
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, [value, duration]);
+
+    useEffect(() => {
+        if (prevValueRef.current !== value) return;
+        setDisplayValue(value);
+    }, [value]);
+
+    return <span className={className}>{displayValue}</span>;
+}
+
 function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode, t }) {
     const [tab, setTab] = useState('timer'); // timer, bracket, rank
     const currentPlayer = players.find(p => p.id === currentPlayerId);
+    const sortedPlayers = useMemo(() => [...players].sort((a, b) => b.score - a.score), [players]);
+    const rankRowRefs = useRef(new Map());
+    const prevPositionsRef = useRef(new Map());
+
+    useLayoutEffect(() => {
+        const newPositions = new Map();
+        rankRowRefs.current.forEach((node, id) => {
+            if (!node) return;
+            newPositions.set(id, node.getBoundingClientRect());
+        });
+
+        const rafIds = [];
+        prevPositionsRef.current.forEach((prevRect, id) => {
+            const node = rankRowRefs.current.get(id);
+            const newRect = newPositions.get(id);
+            if (!node || !prevRect || !newRect) return;
+            const dy = prevRect.top - newRect.top;
+            if (dy) {
+                node.style.transform = `translateY(${dy}px)`;
+                node.style.transition = 'transform 0s';
+                node.style.willChange = 'transform';
+                const raf = requestAnimationFrame(() => {
+                    node.style.transition = 'transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    node.style.transform = 'translateY(0)';
+                });
+                rafIds.push(raf);
+            }
+        });
+
+        prevPositionsRef.current = newPositions;
+        return () => {
+            rafIds.forEach(id => cancelAnimationFrame(id));
+        };
+    }, [sortedPlayers.map(p => `${p.id}:${p.score}`).join('|')]);
 
     if (!currentPlayerId || !currentPlayer) {
         return (
@@ -614,24 +686,31 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                         <BracketView matches={matches} players={players} t={t} />
                     </div>
                 )}
-                {tab === 'rank' && (
-                    <div className="h-full bg-retro-bg p-2 overflow-y-auto">
-                        <h2 className="text-center font-pixel text-neon-green py-4 text-xl">{t ? t('leaderboard') : 'LEADERBOARD'}</h2>
-                        {[...players].sort((a, b) => b.score - a.score).map((p, i) => {
-                            const isMe = currentPlayerId && p.id === currentPlayerId;
-                            return (
-                                <div key={p.id} className={`mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between ${isMe ? 'border-neon-green bg-green-900/40 shadow-[0_0_12px_rgba(0,255,65,0.35)]' : ''}`}>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
-                                        <span className={`font-pixel text-sm ${isMe ? 'text-neon-green' : 'text-neon-cyan'}`}>{p.name}</span>
-                                        {isMe && <span className="text-[9px] text-neon-green border border-neon-green px-1 py-0.5">{t ? t('you_tag') : 'YOU'}</span>}
+                    {tab === 'rank' && (
+                        <div className="h-full bg-retro-bg p-2 overflow-y-auto">
+                            <h2 className="text-center font-pixel text-neon-green py-4 text-xl">{t ? t('leaderboard') : 'LEADERBOARD'}</h2>
+                            {sortedPlayers.map((p, i) => {
+                                const isMe = currentPlayerId && p.id === currentPlayerId;
+                                return (
+                                    <div
+                                        key={p.id}
+                                        ref={(el) => {
+                                            if (el) rankRowRefs.current.set(p.id, el);
+                                            else rankRowRefs.current.delete(p.id);
+                                        }}
+                                        className={`mb-2 bg-gray-800 border-2 border-retro-text p-3 flex items-center justify-between ${isMe ? 'border-neon-green bg-green-900/40 shadow-[0_0_12px_rgba(0,255,65,0.35)]' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
+                                            <span className={`font-pixel text-sm ${isMe ? 'text-neon-green' : 'text-neon-cyan'}`}>{p.name}</span>
+                                            {isMe && <span className="text-[9px] text-neon-green border border-neon-green px-1 py-0.5">{t ? t('you_tag') : 'YOU'}</span>}
+                                        </div>
+                                        <AnimatedNumber value={p.score} className="font-pixel text-xl text-neon-pink" />
                                     </div>
-                                    <span className="font-pixel text-xl text-neon-pink">{p.score}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                                );
+                            })}
+                        </div>
+                    )}
             </div>
 
             <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
