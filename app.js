@@ -306,8 +306,9 @@ function PlayerScoreRow({ player, onUpdate }) {
 
 function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode }) {
     const [tab, setTab] = useState('timer'); // timer, bracket, rank
+    const currentPlayer = players.find(p => p.id === currentPlayerId);
 
-    if (!currentPlayerId) {
+    if (!currentPlayerId || !currentPlayer) {
         return (
             <div className="flex flex-col h-full">
                 <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
@@ -411,7 +412,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
     );
 }
 
-function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode }) {
+function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady }) {
     const [tab, setTab] = useState('manage'); // manage, timer, people, broadcast
     const [minutesInput, setMinutesInput] = useState(10);
     const [scoreState, setScoreState] = useState({ matchId: '', p1: '', p2: '', mode: 'individual' });
@@ -622,6 +623,12 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 reltive">
+                {!roomReady && (
+                    <div className="mb-4 bg-yellow-900/40 border-2 border-yellow-400 text-yellow-200 p-3 text-center text-[10px] font-pixel">
+                        SYNCING ROOM DATA...
+                    </div>
+                )}
+                <div className={`${!roomReady ? 'pointer-events-none opacity-60' : ''}`}>
                 {tab === 'timer' && (
                     <div className="space-y-6">
                         <PixelCard title="TIMER CONTROL">
@@ -821,6 +828,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                         </PixelCard>
                     </div>
                 )}
+                </div>
             </div>
 
             <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
@@ -858,6 +866,7 @@ function App() {
     const firebaseDbRef = useRef(null);
     const syncFlagsRef = useRef({ players: false, matches: false, timer: false, messages: false });
     const hydrationRef = useRef({ players: false, matches: false, timer: false, messages: false });
+    const [roomReady, setRoomReady] = useState(false);
 
     useEffect(() => {
         try {
@@ -907,11 +916,19 @@ function App() {
         setLocalStorage(`gk_${roomCode}_me`, currentPlayerId);
     }, [roomCode, currentPlayerId]);
 
+    const updateRoomReady = () => {
+        const h = hydrationRef.current;
+        if (h.players && h.matches && h.timer && h.messages) {
+            setRoomReady(true);
+        }
+    };
+
     useEffect(() => {
         setPlayers([]);
         setMatches([]);
         setTimerStats({ targetTime: null, isRunning: false });
         setMessages([]);
+        setRoomReady(false);
         if (!roomCode || !firebaseStatus.ready || !firebaseDbRef.current) {
             return;
         }
@@ -925,31 +942,38 @@ function App() {
         const timerRef = firebaseDbRef.current.ref(`${basePath}/timer`);
         const messagesRef = firebaseDbRef.current.ref(`${basePath}/messages`);
 
+        const handleDbError = (error) => {
+            setToast({ message: `Firebase error: ${error.code || 'unknown'}`, type: "error" });
+        };
         const onPlayers = (snap) => {
             hydrationRef.current.players = true;
             syncFlagsRef.current.players = true;
             setPlayers(snap.val() || []);
+            updateRoomReady();
         };
         const onMatches = (snap) => {
             hydrationRef.current.matches = true;
             syncFlagsRef.current.matches = true;
             setMatches(snap.val() || []);
+            updateRoomReady();
         };
         const onTimer = (snap) => {
             hydrationRef.current.timer = true;
             syncFlagsRef.current.timer = true;
             setTimerStats(snap.val() || { targetTime: null, isRunning: false });
+            updateRoomReady();
         };
         const onMessages = (snap) => {
             hydrationRef.current.messages = true;
             syncFlagsRef.current.messages = true;
             setMessages(snap.val() || []);
+            updateRoomReady();
         };
 
-        playersRef.on('value', onPlayers);
-        matchesRef.on('value', onMatches);
-        timerRef.on('value', onTimer);
-        messagesRef.on('value', onMessages);
+        playersRef.on('value', onPlayers, handleDbError);
+        matchesRef.on('value', onMatches, handleDbError);
+        timerRef.on('value', onTimer, handleDbError);
+        messagesRef.on('value', onMessages, handleDbError);
 
         return () => {
             playersRef.off('value', onPlayers);
@@ -1000,12 +1024,12 @@ function App() {
     }, [roomCode, firebaseStatus.ready, messages]);
 
     useEffect(() => {
+        if (!roomReady) return;
         if (!currentPlayerId) return;
-        if (players.length === 0) return;
         if (!players.find(p => p.id === currentPlayerId)) {
             setCurrentPlayerId(null);
         }
-    }, [players, currentPlayerId]);
+    }, [roomReady, players, currentPlayerId]);
 
     const handleSendMessage = (text, targets, targetNames) => {
         const newMsg = {
@@ -1057,6 +1081,7 @@ function App() {
             setToast({ message: firebaseStatus.error || "Firebase not ready.", type: "error" });
             return;
         }
+        setLocalStorage(`gk_${code}_me`, null);
         setCurrentPlayerId(null);
         setRoomCode(code);
         setViewMode('contestant');
@@ -1160,6 +1185,7 @@ function App() {
                     setToast={setToast}
                     onSendMessage={handleSendMessage}
                     roomCode={roomCode}
+                    roomReady={roomReady}
                 />
             )}
         </div>
