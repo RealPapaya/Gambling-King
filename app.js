@@ -25,8 +25,235 @@ function normalizeRoomCode(value) {
     return (value || '').toString().replace(/\D/g, '').slice(0, 4);
 }
 
+const I18N = {
+    zh: {
+        app_title: "賭王大賽",
+        app_subtitle: "賽事系統 V2.1",
+        language: "語言",
+        lang_zh: "中文",
+        lang_en: "EN",
+        system_ready_enter: "系統就緒 // 請輸入房號",
+        firebase_status: "FIREBASE：{status}",
+        firebase_ready: "已連線",
+        firebase_error: "錯誤",
+        room: "房間",
+        room_code: "房號",
+        scorer_title: "記分員",
+        scorer_desc: "建立 4 碼房號",
+        player_title: "玩家",
+        player_desc: "加入已存在房間",
+        enter_scorer: "以記分員進入",
+        enter_player: "以玩家進入",
+        exit: "離開",
+        player_view: "玩家視角",
+        change_name: "更換名字",
+        select_name: "選擇你的名字",
+        waiting_for_scorer: "等待記分員新增玩家。",
+        ask_scorer_room_code: "請記分員使用此 4 碼房號。",
+        you_tag: "你",
+        broadcast_title: "廣播",
+        message_for: "訊息對象：",
+        you: "你",
+        close: "關閉",
+        time: "時間",
+        bracket: "對戰表",
+        rank: "排行榜",
+        match_time: "比賽時間",
+        leaderboard: "排行榜",
+        no_matches: "目前無賽程",
+        round: "第 {num} 輪",
+        round_short: "R",
+        done: "完成",
+        vs: "對",
+        bye: "輪空",
+        scorer_admin: "記分員管理",
+        syncing_room_data: "同步房間資料中...",
+        scores: "計分",
+        timer: "計時",
+        players: "名單",
+        schedule: "賽程",
+        msg: "訊息",
+        timer_control: "計時控制",
+        minutes: "分鐘",
+        set_minutes: "設定分鐘",
+        start: "開始",
+        stop: "停止",
+        reset: "重置",
+        stop_reset: "停止/重置",
+        add_player: "新增參賽者",
+        player_list: "參賽者列表",
+        no_players: "尚無參賽者",
+        add: "新增",
+        edit: "改名",
+        save: "儲存",
+        cancel: "取消",
+        delete: "刪除",
+        name_placeholder: "姓名",
+        name_required: "請輸入名字。",
+        delete_player_confirm: "刪除參賽者：{name}？",
+        player_deleted: "已刪除參賽者",
+        player_added: "已新增參賽者",
+        name_updated: "已更新名字",
+        generate_schedule: "產生賽程",
+        select_format: "依人數選擇賽制（{count}）",
+        generate: "產生",
+        factory_reset: "重置全部資料",
+        confirm_reset: "確定重置所有資料？",
+        confirm_generate: "確定產生 {type} 賽程？現有賽程將被清除。",
+        schedule_generated: "{type} 賽程已產生！場次：{count}",
+        need_players: "至少需要 2 位參賽者",
+        update_scores: "更新分數",
+        mode_individual: "個人加分",
+        mode_match: "對戰模式",
+        select_match: "選擇比賽...",
+        submit_result: "提交結果",
+        recent_activity: "最近戰績",
+        quick_add_points: "快速加分",
+        points_short: "分",
+        slider: "滑桿",
+        keyboard: "鍵盤",
+        confirm: "確認",
+        enter_value: "輸入數值...",
+        broadcast_system: "廣播系統",
+        message_content: "訊息內容",
+        enter_message: "輸入廣播訊息...",
+        recipients: "接收對象",
+        all_players: "所有玩家",
+        select_players: "指定玩家",
+        send_broadcast: "送出廣播",
+        select_at_least_one: "請至少選擇一位玩家",
+        message_broadcasted: "已送出廣播",
+        timer_started: "計時開始！",
+        timer_stopped: "計時停止！",
+        timer_paused: "計時暫停！",
+        timer_reset: "計時已重置！",
+        score_updated: "分數已更新！",
+        points_added: "已加分 {delta}！",
+        enter_room_code: "請輸入 4 碼房號。",
+        firebase_not_ready: "Firebase 尚未就緒。",
+        room_not_found: "房間不存在，請先由記分員建立。",
+        firebase_error_msg: "Firebase 錯誤：{code}",
+        firebase_write_failed: "Firebase 寫入失敗：{code}",
+        type_1v1: "1V1（單淘汰首輪）",
+        type_swiss: "瑞士制（高分對高分）",
+        type_group: "分組循環",
+    },
+    en: {
+        app_title: "Gambling King",
+        app_subtitle: "TOURNAMENT SYSTEM V2.1",
+        language: "LANG",
+        lang_zh: "中文",
+        lang_en: "EN",
+        system_ready_enter: "SYSTEM READY // ENTER ROOM CODE",
+        firebase_status: "FIREBASE: {status}",
+        firebase_ready: "READY",
+        firebase_error: "ERROR",
+        room: "ROOM",
+        room_code: "ROOM CODE",
+        scorer_title: "Scorer",
+        scorer_desc: "Create a 4-digit room code",
+        player_title: "Player",
+        player_desc: "Join an existing room",
+        enter_scorer: "ENTER AS SCORER",
+        enter_player: "ENTER AS PLAYER",
+        exit: "EXIT",
+        player_view: "PLAYER VIEW",
+        change_name: "CHANGE NAME",
+        select_name: "SELECT YOUR NAME",
+        waiting_for_scorer: "Waiting for scorer to add players.",
+        ask_scorer_room_code: "Ask the scorer to use this 4-digit code.",
+        you_tag: "YOU",
+        broadcast_title: "BROADCAST",
+        message_for: "MESSAGE FOR:",
+        you: "YOU",
+        close: "CLOSE",
+        time: "TIME",
+        bracket: "BRACKET",
+        rank: "RANK",
+        match_time: "MATCH TIME",
+        leaderboard: "LEADERBOARD",
+        no_matches: "NO MATCHES",
+        round: "ROUND {num}",
+        round_short: "R",
+        done: "DONE",
+        vs: "vs",
+        bye: "Bye",
+        scorer_admin: "SCORER ADMIN",
+        syncing_room_data: "SYNCING ROOM DATA...",
+        scores: "SCORES",
+        timer: "TIMER",
+        players: "PLAYERS",
+        schedule: "SCHEDULE",
+        msg: "MSG",
+        timer_control: "TIMER CONTROL",
+        minutes: "MINUTES",
+        set_minutes: "SET MINUTES",
+        start: "START",
+        stop: "STOP",
+        reset: "RESET",
+        stop_reset: "STOP/RESET",
+        add_player: "ADD PLAYER",
+        player_list: "PLAYER LIST",
+        no_players: "NO PLAYERS",
+        add: "ADD",
+        edit: "EDIT",
+        save: "SAVE",
+        cancel: "CANCEL",
+        delete: "DELETE",
+        name_placeholder: "Name",
+        name_required: "Name required.",
+        delete_player_confirm: "DELETE PLAYER: {name}?",
+        player_deleted: "Player Deleted",
+        player_added: "Player Added",
+        name_updated: "Name Updated",
+        generate_schedule: "GENERATE SCHEDULE",
+        select_format: "Select format based on player count ({count}).",
+        generate: "GENERATE",
+        factory_reset: "FACTORY RESET",
+        confirm_reset: "RESET ALL DATA?",
+        confirm_generate: "Generate {type} schedule? Existing matches will be CLEARED.",
+        schedule_generated: "{type} Schedule Generated! Matches: {count}",
+        need_players: "Need at least 2 players!",
+        update_scores: "UPDATE SCORES",
+        mode_individual: "INDIVIDUAL",
+        mode_match: "MATCH MODE",
+        select_match: "Select Match...",
+        submit_result: "SUBMIT RESULT",
+        recent_activity: "RECENT ACTIVITY",
+        quick_add_points: "QUICK ADD POINTS",
+        points_short: "pts",
+        slider: "SLIDER",
+        keyboard: "KEYBOARD",
+        confirm: "CONFIRM",
+        enter_value: "Enter value...",
+        broadcast_system: "BROADCAST SYSTEM",
+        message_content: "MESSAGE CONTENT",
+        enter_message: "Enter message to broadcast...",
+        recipients: "RECIPIENTS",
+        all_players: "ALL PLAYERS",
+        select_players: "SELECT PLAYERS",
+        send_broadcast: "SEND BROADCAST",
+        select_at_least_one: "Select at least one player!",
+        message_broadcasted: "Message Broadcasted!",
+        timer_started: "Timer Started!",
+        timer_stopped: "Timer Stopped!",
+        timer_paused: "Timer Paused!",
+        timer_reset: "Timer Reset!",
+        score_updated: "Score Updated!",
+        points_added: "Points {delta} Added!",
+        enter_room_code: "Enter a 4-digit room code.",
+        firebase_not_ready: "Firebase not ready.",
+        room_not_found: "Room not found. Ask scorer to create it first.",
+        firebase_error_msg: "Firebase error: {code}",
+        firebase_write_failed: "Firebase write failed: {code}",
+        type_1v1: "1V1 (Single Elim Round 1)",
+        type_swiss: "SWISS (High Scores vs High)",
+        type_group: "GROUP (Round Robin)",
+    }
+};
+
 // --- Common Components ---
-function BroadcastOverlay({ messages, currentPlayerId }) {
+function BroadcastOverlay({ messages, currentPlayerId, t }) {
     const [currentMsg, setCurrentMsg] = useState(null);
 
     useEffect(() => {
@@ -56,9 +283,10 @@ function BroadcastOverlay({ messages, currentPlayerId }) {
 
     if (!currentMsg) return null;
 
-    let title = "BROADCAST";
+    let title = t ? t('broadcast_title') : "BROADCAST";
     if (currentMsg.targets && !currentMsg.targets.includes('all')) {
-        title = `MESSAGE FOR: ${currentMsg.targetNames ? currentMsg.targetNames.join(', ') : 'YOU'}`;
+        const names = currentMsg.targetNames ? currentMsg.targetNames.join(', ') : (t ? t('you') : 'YOU');
+        title = `${t ? t('message_for') : 'MESSAGE FOR:'} ${names}`;
     }
 
     return (
@@ -70,7 +298,7 @@ function BroadcastOverlay({ messages, currentPlayerId }) {
                     onClick={() => setCurrentMsg(null)}
                     className="bg-retro-accent text-white font-pixel text-xl px-8 py-4 border-4 border-white hover:bg-white hover:text-black hover:scale-105 active:scale-95 transition-all shadow-pixel"
                 >
-                    CLOSE
+                    {t ? t('close') : 'CLOSE'}
                 </button>
             </div>
         </div>
@@ -175,8 +403,8 @@ function CountdownDisplay({ targetTime, remainingSeconds, isRunning }) {
     );
 }
 
-function BracketView({ matches, players }) {
-    const getPlayerName = (id) => players.find(p => p.id === id)?.name || "Bye";
+function BracketView({ matches, players, t }) {
+    const getPlayerName = (id) => players.find(p => p.id === id)?.name || (t ? t('bye') : "Bye");
 
     const rounds = matches.reduce((acc, match) => {
         const round = match.round || 1;
@@ -186,19 +414,21 @@ function BracketView({ matches, players }) {
     }, {});
 
     if (Object.keys(rounds).length === 0) {
-        return <div className="text-center font-pixel text-gray-500 py-10">NO MATCHES</div>;
+        return <div className="text-center font-pixel text-gray-500 py-10">{t ? t('no_matches') : 'NO MATCHES'}</div>;
     }
 
     return (
         <div className="flex flex-nowrap gap-8 overflow-x-auto p-4 pb-8 items-start h-full">
             {Object.keys(rounds).map((roundNum) => (
                 <div key={roundNum} className="flex-shrink-0 w-64 flex flex-col gap-4">
-                    <h3 className="text-center font-pixel text-neon-cyan mb-2 border-b-2 border-neon-cyan pb-1">ROUND {roundNum}</h3>
+                    <h3 className="text-center font-pixel text-neon-cyan mb-2 border-b-2 border-neon-cyan pb-1">
+                        {t ? t('round', { num: roundNum }) : `ROUND ${roundNum}`}
+                    </h3>
                     {rounds[roundNum].map(match => (
                         <div key={match.id} className={`bg-gray-900 border-2 ${match.status === 'completed' ? 'border-neon-green' : 'border-gray-600'} p-2 relative`}>
                             <div className="flex justify-between items-center bg-black/50 p-1 mb-2">
                                 <span className="text-[10px] text-gray-400 font-mono">#{match.id.substr(0, 4)}</span>
-                                {match.status === 'completed' && <span className="text-[10px] text-neon-green">DONE</span>}
+                                {match.status === 'completed' && <span className="text-[10px] text-neon-green">{t ? t('done') : 'DONE'}</span>}
                             </div>
                             <div className={`flex justify-between items-center p-1 ${match.winnerId && match.winnerId === match.p1_id ? 'bg-green-900/40 text-neon-green' : ''}`}>
                                 <span className="font-pixel text-xs truncate max-w-[100px]">{getPlayerName(match.p1_id)}</span>
@@ -217,7 +447,7 @@ function BracketView({ matches, players }) {
     );
 }
 
-function PlayerScoreRow({ player, onUpdate }) {
+function PlayerScoreRow({ player, onUpdate, t }) {
     const [isAdd, setIsAdd] = useState(true);
     const [mode, setMode] = useState('slider'); // 'slider' | 'text'
     const [sliderVal, setSliderVal] = useState(10);
@@ -236,7 +466,7 @@ function PlayerScoreRow({ player, onUpdate }) {
         <div className="bg-gray-800 border border-gray-600 p-2 flex flex-col gap-2 relative overflow-hidden">
             <div className="flex justify-between items-center z-10">
                 <span className="font-pixel text-xs text-neon-cyan truncate max-w-[150px]">{player.name}</span>
-                <span className="font-mono text-neon-pink text-sm">{player.score} pts</span>
+                <span className="font-mono text-neon-pink text-sm">{player.score} {t ? t('points_short') : 'pts'}</span>
             </div>
 
             <div className="flex flex-col gap-2 z-10">
@@ -258,13 +488,13 @@ function PlayerScoreRow({ player, onUpdate }) {
                             onClick={() => setMode('slider')}
                             className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'slider' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
                         >
-                            SLIDER
+                            {t ? t('slider') : 'SLIDER'}
                         </button>
                         <button
                             onClick={() => setMode('text')}
                             className={`flex-1 text-[10px] font-pixel flex items-center justify-center gap-1 ${mode === 'text' ? 'bg-retro-text text-white' : 'bg-gray-900 text-gray-500'}`}
                         >
-                            KEYBOARD
+                            {t ? t('keyboard') : 'KEYBOARD'}
                         </button>
                     </div>
                 </div>
@@ -288,7 +518,7 @@ function PlayerScoreRow({ player, onUpdate }) {
                             value={textVal}
                             onChange={(e) => setTextVal(e.target.value)}
                             className="w-full bg-transparent text-white font-mono text-center text-lg outline-none placeholder-gray-700"
-                            placeholder="Enter value..."
+                            placeholder={t ? t('enter_value') : "Enter value..."}
                             onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
                             autoFocus
                         />
@@ -300,14 +530,14 @@ function PlayerScoreRow({ player, onUpdate }) {
                     onClick={handleConfirm}
                     className={`w-full py-1 font-pixel text-xs border text-white shadow-pixel-sm active:translate-y-0.5 active:shadow-none transition-all ${isAdd ? 'bg-green-700 border-green-400 hover:bg-green-600' : 'bg-red-900 border-red-500 hover:bg-red-800'}`}
                 >
-                    CONFIRM {isAdd ? '+' : '-'}{mode === 'slider' ? sliderVal : (textVal || '0')}
+                    {t ? t('confirm') : 'CONFIRM'} {isAdd ? '+' : '-'}{mode === 'slider' ? sliderVal : (textVal || '0')}
                 </button>
             </div>
         </div>
     );
 }
 
-function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode }) {
+function ContestantScreen({ players, matches, timerStats, onBack, messages, currentPlayerId, setCurrentPlayerId, roomCode, t }) {
     const [tab, setTab] = useState('timer'); // timer, bracket, rank
     const currentPlayer = players.find(p => p.id === currentPlayerId);
 
@@ -315,16 +545,16 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
         return (
             <div className="flex flex-col h-full">
                 <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
-                    <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; EXIT</Button>
+                    <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; {t ? t('exit') : 'EXIT'}</Button>
                     <div className="flex flex-col items-center">
-                        <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
-                        {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                        <span className="font-pixel text-xs text-neon-pink">{t ? t('player_view') : 'PLAYER VIEW'}</span>
+                        {roomCode && <span className="text-[10px] text-neon-cyan">{t ? t('room') : 'ROOM'} {roomCode}</span>}
                     </div>
                     <span className="w-16"></span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 bg-retro-bg">
-                    <PixelCard title="SELECT YOUR NAME">
+                    <PixelCard title={t ? t('select_name') : 'SELECT YOUR NAME'}>
                         {players.length > 0 ? (
                             <div className="grid grid-cols-2 gap-2">
                                 {players.map(p => (
@@ -339,15 +569,15 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                             </div>
                         ) : (
                             <div className="text-center text-xs text-gray-500 font-mono py-6">
-                                Waiting for scorer to add players.
+                                {t ? t('waiting_for_scorer') : 'Waiting for scorer to add players.'}
                             </div>
                         )}
                     </PixelCard>
 
-                    <PixelCard title="ROOM CODE" className="mt-6">
+                    <PixelCard title={t ? t('room_code') : 'ROOM CODE'} className="mt-6">
                         <div className="text-center">
                             <div className="font-pixel text-3xl text-yellow-400 tracking-[0.3em]">{roomCode || '----'}</div>
-                            <div className="text-[10px] text-gray-500 mt-3">Ask the scorer to use this 4-digit code.</div>
+                            <div className="text-[10px] text-gray-500 mt-3">{t ? t('ask_scorer_room_code') : 'Ask the scorer to use this 4-digit code.'}</div>
                         </div>
                     </PixelCard>
                 </div>
@@ -357,20 +587,20 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
 
     return (
         <div className="flex flex-col h-full">
-            <BroadcastOverlay messages={messages} currentPlayerId={currentPlayerId} />
+            <BroadcastOverlay messages={messages} currentPlayerId={currentPlayerId} t={t} />
             <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-900">
-                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; EXIT</Button>
+                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; {t ? t('exit') : 'EXIT'}</Button>
                 <div className="flex flex-col items-center">
-                    <span className="font-pixel text-xs text-neon-pink">PLAYER VIEW</span>
-                    {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                    <span className="font-pixel text-xs text-neon-pink">{t ? t('player_view') : 'PLAYER VIEW'}</span>
+                    {roomCode && <span className="text-[10px] text-neon-cyan">{t ? t('room') : 'ROOM'} {roomCode}</span>}
                 </div>
-                <button onClick={() => setCurrentPlayerId(null)} className="text-[10px] text-gray-400 hover:text-white px-2">CHANGE NAME</button>
+                <button onClick={() => setCurrentPlayerId(null)} className="text-[10px] text-gray-400 hover:text-white px-2">{t ? t('change_name') : 'CHANGE NAME'}</button>
             </div>
 
             <div className="flex-1 overflow-hidden relative">
                 {tab === 'timer' && (
                     <div className="h-full flex flex-col justify-center items-center p-8 text-center bg-retro-bg">
-                        <h1 className="text-2xl font-pixel text-white mb-8"> MATCH TIME</h1>
+                        <h1 className="text-2xl font-pixel text-white mb-8">{t ? t('match_time') : 'MATCH TIME'}</h1>
                         <CountdownDisplay
                             targetTime={timerStats?.targetTime}
                             remainingSeconds={timerStats?.remainingSeconds}
@@ -381,12 +611,12 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                 )}
                 {tab === 'bracket' && (
                     <div className="h-full bg-retro-bg">
-                        <BracketView matches={matches} players={players} />
+                        <BracketView matches={matches} players={players} t={t} />
                     </div>
                 )}
                 {tab === 'rank' && (
                     <div className="h-full bg-retro-bg p-2 overflow-y-auto">
-                        <h2 className="text-center font-pixel text-neon-green py-4 text-xl">LEADERBOARD</h2>
+                        <h2 className="text-center font-pixel text-neon-green py-4 text-xl">{t ? t('leaderboard') : 'LEADERBOARD'}</h2>
                         {[...players].sort((a, b) => b.score - a.score).map((p, i) => {
                             const isMe = currentPlayerId && p.id === currentPlayerId;
                             return (
@@ -394,7 +624,7 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
                                     <div className="flex items-center gap-3">
                                         <span className={`font-pixel text-lg w-8 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i + 1}</span>
                                         <span className={`font-pixel text-sm ${isMe ? 'text-neon-green' : 'text-neon-cyan'}`}>{p.name}</span>
-                                        {isMe && <span className="text-[9px] text-neon-green border border-neon-green px-1 py-0.5">YOU</span>}
+                                        {isMe && <span className="text-[9px] text-neon-green border border-neon-green px-1 py-0.5">{t ? t('you_tag') : 'YOU'}</span>}
                                     </div>
                                     <span className="font-pixel text-xl text-neon-pink">{p.score}</span>
                                 </div>
@@ -406,20 +636,20 @@ function ContestantScreen({ players, matches, timerStats, onBack, messages, curr
 
             <div className="bg-black border-t-4 border-retro-text grid grid-cols-3 p-2 gap-2">
                 <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Clock size={20} className="mb-1" /> TIME
+                    <Icons.Clock size={20} className="mb-1" /> {t ? t('time') : 'TIME'}
                 </button>
                 <button onClick={() => setTab('bracket')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'bracket' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Calendar size={20} className="mb-1" /> BRACKET
+                    <Icons.Calendar size={20} className="mb-1" /> {t ? t('bracket') : 'BRACKET'}
                 </button>
                 <button onClick={() => setTab('rank')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'rank' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Trophy size={20} className="mb-1" /> RANK
+                    <Icons.Trophy size={20} className="mb-1" /> {t ? t('rank') : 'RANK'}
                 </button>
             </div>
         </div>
     );
 }
 
-function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady, firebaseStatus }) {
+function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, setTimerStats, onBack, setToast, onSendMessage, roomCode, roomReady, firebaseStatus, t }) {
     const [tab, setTab] = useState('manage'); // manage, timer, players, schedule, broadcast
     const [minutesInput, setMinutesInput] = useState(10);
     const [scoreState, setScoreState] = useState({ matchId: '', p1: '', p2: '', mode: 'individual' });
@@ -435,18 +665,18 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
 
         const targets = broadcastTarget === 'all' ? ['all'] : selectedPlayers;
         if (broadcastTarget === 'select' && selectedPlayers.length === 0) {
-            setToast({ message: "Select at least one player!", type: "error" });
+            setToast({ message: t ? t('select_at_least_one') : "Select at least one player!", type: "error" });
             return;
         }
 
         // Get names for display
         const targetNames = broadcastTarget === 'all'
-            ? ['ALL']
+            ? [t ? t('all_players') : 'ALL']
             : players.filter(p => selectedPlayers.includes(p.id)).map(p => p.name);
 
         onSendMessage(broadcastMsg, targets, targetNames);
         setBroadcastMsg('');
-        setToast({ message: "Message Broadcasted!", type: "success" });
+        setToast({ message: t ? t('message_broadcasted') : "Message Broadcasted!", type: "success" });
     };
 
     const [newPlayerName, setNewPlayerName] = useState("");
@@ -488,7 +718,8 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
 
         setMatches(updatedMatches);
         setPlayers(newPlayerStats);
-        setToast({ message: `Points ${delta > 0 ? '+' : ''}${delta} Added!`, type: "success" });
+        const deltaLabel = `${delta > 0 ? '+' : ''}${delta}`;
+        setToast({ message: t ? t('points_added', { delta: deltaLabel }) : `Points ${deltaLabel} Added!`, type: "success" });
     };
     const [tournamentType, setTournamentType] = useState("1V1"); // 1V1, SWISS, GROUP
 
@@ -496,22 +727,25 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
     const startTimer = () => {
         const target = Date.now() + (minutesInput * 60 * 1000);
         setTimerStats({ targetTime: target, isRunning: true });
-        setToast({ message: "Timer Started!", type: "success" });
+        setToast({ message: t ? t('timer_started') : "Timer Started!", type: "success" });
     };
 
     const stopTimer = () => {
         setTimerStats({ targetTime: null, isRunning: false });
-        setToast({ message: "Timer Stopped!", type: "error" });
+        setToast({ message: t ? t('timer_stopped') : "Timer Stopped!", type: "error" });
     };
 
     // Scheduling Logic
     const generateSchedule = () => {
         if (players.length < 2) {
-            setToast({ message: "Need at least 2 players!", type: "error" });
+            setToast({ message: t ? t('need_players') : "Need at least 2 players!", type: "error" });
             return;
         }
 
-        if (!confirm(`Generate ${tournamentType} schedule? Existing matches will be CLEARED.`)) return;
+        const typeLabel = t
+            ? (tournamentType === "1V1" ? t('type_1v1') : tournamentType === "SWISS" ? t('type_swiss') : t('type_group'))
+            : tournamentType;
+        if (!confirm(t ? t('confirm_generate', { type: typeLabel }) : `Generate ${tournamentType} schedule? Existing matches will be CLEARED.`)) return;
 
         const newMatches = [];
         let timestamp = Date.now();
@@ -567,7 +801,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
         }
 
         setMatches(newMatches);
-        setToast({ message: `${tournamentType} Schedule Generated! Matches: ${newMatches.length}`, type: "success" });
+        setToast({ message: t ? t('schedule_generated', { type: typeLabel, count: newMatches.length }) : `${tournamentType} Schedule Generated! Matches: ${newMatches.length}`, type: "success" });
     };
 
     const createMatch = (p1, p2, round, ts) => ({
@@ -610,7 +844,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
         setMatches(updatedMatches);
         setPlayers(newPlayerStats);
         setScoreState({ matchId: '', p1: '', p2: '' });
-        setToast({ message: "Score Updated!", type: "success" });
+        setToast({ message: t ? t('score_updated') : "Score Updated!", type: "success" });
     };
 
     const recomputePlayerStats = (basePlayers, matchList) => {
@@ -637,7 +871,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
         if (!name) return;
         setPlayers([...players, { id: generateId(), name, score: 0, wins: 0, losses: 0 }]);
         setNewPlayerName("");
-        setToast({ message: "Player Added", type: "success" });
+        setToast({ message: t ? t('player_added') : "Player Added", type: "success" });
     };
 
     const startEditPlayer = (player) => {
@@ -653,20 +887,20 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
     const saveEditPlayer = () => {
         const name = editingName.trim();
         if (!name) {
-            setToast({ message: "Name required.", type: "error" });
+            setToast({ message: t ? t('name_required') : "Name required.", type: "error" });
             return;
         }
         const updatedPlayers = players.map(p => p.id === editingPlayerId ? { ...p, name } : p);
         setPlayers(updatedPlayers);
         setEditingPlayerId(null);
         setEditingName("");
-        setToast({ message: "Name Updated", type: "success" });
+        setToast({ message: t ? t('name_updated') : "Name Updated", type: "success" });
     };
 
     const deletePlayer = (playerId) => {
         const player = players.find(p => p.id === playerId);
         if (!player) return;
-        if (!confirm(`DELETE PLAYER: ${player.name}?`)) return;
+        if (!confirm(t ? t('delete_player_confirm', { name: player.name }) : `DELETE PLAYER: ${player.name}?`)) return;
         const remainingPlayers = players.filter(p => p.id !== playerId);
         const remainingMatches = matches.filter(m => m.p1_id !== playerId && m.p2_id !== playerId);
         const recalculatedPlayers = recomputePlayerStats(remainingPlayers, remainingMatches);
@@ -677,18 +911,18 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
             setEditingPlayerId(null);
             setEditingName("");
         }
-        setToast({ message: "Player Deleted", type: "success" });
+        setToast({ message: t ? t('player_deleted') : "Player Deleted", type: "success" });
     };
 
     return (
         <div className="flex flex-col h-full bg-gray-900 border-x-4 border-retro-text">
             <div className="p-2 border-b-4 border-retro-text flex justify-between items-center bg-gray-800">
-                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; EXIT</Button>
+                <Button onClick={onBack} variant="secondary" className="py-2 px-2 text-[10px]">&lt; {t ? t('exit') : 'EXIT'}</Button>
                 <div className="flex flex-col items-center">
-                    <span className="font-pixel text-xs text-yellow-400">SCORER ADMIN</span>
-                    {roomCode && <span className="text-[10px] text-neon-cyan">ROOM {roomCode}</span>}
+                    <span className="font-pixel text-xs text-yellow-400">{t ? t('scorer_admin') : 'SCORER ADMIN'}</span>
+                    {roomCode && <span className="text-[10px] text-neon-cyan">{t ? t('room') : 'ROOM'} {roomCode}</span>}
                     <span className={`text-[9px] ${firebaseStatus?.ready ? 'text-neon-green' : 'text-red-400'}`}>
-                        FB {firebaseStatus?.ready ? 'READY' : 'ERROR'}
+                        {t ? t('firebase_status', { status: firebaseStatus?.ready ? t('firebase_ready') : t('firebase_error') }) : `FB ${firebaseStatus?.ready ? 'READY' : 'ERROR'}`}
                     </span>
                 </div>
                 <span className="w-16"></span>
@@ -697,13 +931,13 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
             <div className="flex-1 overflow-y-auto p-4 reltive">
                 {!roomReady && (
                     <div className="mb-4 bg-yellow-900/40 border-2 border-yellow-400 text-yellow-200 p-3 text-center text-[10px] font-pixel">
-                        SYNCING ROOM DATA...
+                        {t ? t('syncing_room_data') : 'SYNCING ROOM DATA...'}
                     </div>
                 )}
                 <div className={`${!roomReady ? 'pointer-events-none opacity-60' : ''}`}>
                     {tab === 'timer' && (
                         <div className="space-y-6">
-                            <PixelCard title="TIMER CONTROL">
+                            <PixelCard title={t ? t('timer_control') : 'TIMER CONTROL'}>
                                 <div className="text-center mb-4">
                                     <CountdownDisplay
                                         targetTime={timerStats?.targetTime}
@@ -713,7 +947,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                 </div>
                                 <div className="flex gap-2 mb-4">
                                     <div className="flex-1">
-                                        <Input label="SET MINUTES" type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
+                                    <Input label={t ? t('set_minutes') : 'SET MINUTES'} type="number" value={minutesInput} onChange={e => setMinutesInput(e.target.value)} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2">
@@ -722,11 +956,11 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                             const seconds = (timerStats?.isRunning ? 0 : (timerStats?.remainingSeconds || minutesInput * 60));
                                             const target = Date.now() + (seconds * 1000);
                                             setTimerStats({ ...timerStats, targetTime: target, isRunning: true });
-                                            setToast({ message: "Timer Started!", type: "success" });
+                                            setToast({ message: t ? t('timer_started') : "Timer Started!", type: "success" });
                                         }}
                                         variant="success"
                                         disabled={timerStats?.isRunning}
-                                    >START</Button>
+                                    >{t ? t('start') : 'START'}</Button>
 
                                     <Button
                                         onClick={() => {
@@ -734,19 +968,19 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                             const now = Date.now();
                                             const remaining = Math.max(0, Math.floor((timerStats.targetTime - now) / 1000));
                                             setTimerStats({ ...timerStats, targetTime: null, remainingSeconds: remaining, isRunning: false });
-                                            setToast({ message: "Timer Paused!", type: "warning" });
+                                            setToast({ message: t ? t('timer_paused') : "Timer Paused!", type: "warning" });
                                         }}
                                         variant="primary"
                                         disabled={!timerStats?.isRunning}
-                                    >STOP</Button>
+                                    >{t ? t('stop') : 'STOP'}</Button>
 
                                     <Button
                                         onClick={() => {
                                             setTimerStats({ targetTime: null, remainingSeconds: minutesInput * 60, isRunning: false });
-                                            setToast({ message: "Timer Reset!", type: "error" });
+                                            setToast({ message: t ? t('timer_reset') : "Timer Reset!", type: "error" });
                                         }}
                                         variant="danger"
-                                    >RESET</Button>
+                                    >{t ? t('reset') : 'RESET'}</Button>
                                 </div>
                             </PixelCard>
                         </div>
@@ -754,16 +988,16 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
 
                     {tab === 'players' && (
                         <div className="space-y-6">
-                            <PixelCard title="ADD PLAYER">
+                            <PixelCard title={t ? t('add_player') : 'ADD PLAYER'}>
                                 <div className="flex gap-2">
-                                    <div className="flex-1"><Input placeholder="Name" value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} /></div>
-                                    <Button onClick={addPlayer} className="h-[42px] mt-0">ADD</Button>
+                                    <div className="flex-1"><Input placeholder={t ? t('name_placeholder') : 'Name'} value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} /></div>
+                                    <Button onClick={addPlayer} className="h-[42px] mt-0">{t ? t('add') : 'ADD'}</Button>
                                 </div>
                             </PixelCard>
 
-                            <PixelCard title="PLAYER LIST">
+                            <PixelCard title={t ? t('player_list') : 'PLAYER LIST'}>
                                 {players.length === 0 ? (
-                                    <div className="text-center text-xs text-gray-500 font-mono py-6">NO PLAYERS</div>
+                                    <div className="text-center text-xs text-gray-500 font-mono py-6">{t ? t('no_players') : 'NO PLAYERS'}</div>
                                 ) : (
                                     <div className="space-y-2">
                                         {players.map(p => (
@@ -781,13 +1015,13 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                                 <div className="flex gap-2">
                                                     {editingPlayerId === p.id ? (
                                                         <>
-                                                            <button onClick={saveEditPlayer} className="px-2 py-1 text-[9px] border border-neon-green text-neon-green hover:bg-green-900/30">SAVE</button>
-                                                            <button onClick={cancelEditPlayer} className="px-2 py-1 text-[9px] border border-gray-500 text-gray-300 hover:bg-gray-700">CANCEL</button>
+                                                            <button onClick={saveEditPlayer} className="px-2 py-1 text-[9px] border border-neon-green text-neon-green hover:bg-green-900/30">{t ? t('save') : 'SAVE'}</button>
+                                                            <button onClick={cancelEditPlayer} className="px-2 py-1 text-[9px] border border-gray-500 text-gray-300 hover:bg-gray-700">{t ? t('cancel') : 'CANCEL'}</button>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <button onClick={() => startEditPlayer(p)} className="px-2 py-1 text-[9px] border border-neon-cyan text-neon-cyan hover:bg-cyan-900/20">EDIT</button>
-                                                            <button onClick={() => deletePlayer(p.id)} className="px-2 py-1 text-[9px] border border-red-500 text-red-400 hover:bg-red-900/30">DELETE</button>
+                                                            <button onClick={() => startEditPlayer(p)} className="px-2 py-1 text-[9px] border border-neon-cyan text-neon-cyan hover:bg-cyan-900/20">{t ? t('edit') : 'EDIT'}</button>
+                                                            <button onClick={() => deletePlayer(p.id)} className="px-2 py-1 text-[9px] border border-red-500 text-red-400 hover:bg-red-900/30">{t ? t('delete') : 'DELETE'}</button>
                                                         </>
                                                     )}
                                                 </div>
@@ -801,34 +1035,38 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
 
                     {tab === 'schedule' && (
                         <div className="space-y-6">
-                            <PixelCard title="GENERATE SCHEDULE">
-                                <p className="text-gray-400 text-xs mb-4">Select format based on player count ({players.length}).</p>
+                            <PixelCard title={t ? t('generate_schedule') : 'GENERATE SCHEDULE'}>
+                                <p className="text-gray-400 text-xs mb-4">
+                                    {t ? t('select_format', { count: players.length }) : `Select format based on player count (${players.length}).`}
+                                </p>
                                 <div className="flex flex-col gap-2 mb-4">
                                     <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === '1V1' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
                                         <input type="radio" name="ttype" checked={tournamentType === '1V1'} onChange={() => setTournamentType('1V1')} />
-                                        <span className="font-pixel text-xs">1V1 (Single Elim Round 1)</span>
+                                        <span className="font-pixel text-xs">{t ? t('type_1v1') : '1V1 (Single Elim Round 1)'}</span>
                                     </label>
                                     <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === 'SWISS' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
                                         <input type="radio" name="ttype" checked={tournamentType === 'SWISS'} onChange={() => setTournamentType('SWISS')} />
-                                        <span className="font-pixel text-xs">SWISS (High Scores vs High)</span>
+                                        <span className="font-pixel text-xs">{t ? t('type_swiss') : 'SWISS (High Scores vs High)'}</span>
                                     </label>
                                     <label className={`border-2 p-3 flex items-center gap-3 cursor-pointer ${tournamentType === 'GROUP' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
                                         <input type="radio" name="ttype" checked={tournamentType === 'GROUP'} onChange={() => setTournamentType('GROUP')} />
-                                        <span className="font-pixel text-xs">GROUP (Round Robin)</span>
+                                        <span className="font-pixel text-xs">{t ? t('type_group') : 'GROUP (Round Robin)'}</span>
                                     </label>
                                 </div>
-                                <Button onClick={generateSchedule} variant="primary" className="w-full">GENERATE</Button>
+                                <Button onClick={generateSchedule} variant="primary" className="w-full">{t ? t('generate') : 'GENERATE'}</Button>
                             </PixelCard>
 
                             <div className="pt-8 text-center">
-                                <Button variant="danger" onClick={() => { if (confirm("RESET ALL DATA?")) { setPlayers([]); setMatches([]); window.location.reload(); } }}>FACTORY RESET</Button>
+                                <Button variant="danger" onClick={() => { if (confirm(t ? t('confirm_reset') : "RESET ALL DATA?")) { setPlayers([]); setMatches([]); window.location.reload(); } }}>
+                                    {t ? t('factory_reset') : 'FACTORY RESET'}
+                                </Button>
                             </div>
                         </div>
                     )}
 
                     {tab === 'manage' && (
                         <div className="space-y-6">
-                            <PixelCard title="UPDATE SCORES">
+                            <PixelCard title={t ? t('update_scores') : 'UPDATE SCORES'}>
                                 {/* Toggle Scoring Mode */}
                                 <div className="flex bg-black border-2 border-retro-text mb-4">
                                     <button
@@ -836,14 +1074,14 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                         style={{ backgroundColor: scoreState.mode === 'individual' ? '#e94560' : 'transparent', color: scoreState.mode === 'individual' ? 'white' : '#6b7280' }}
                                         onClick={() => setScoreState(prev => ({ ...prev, mode: 'individual' }))}
                                     >
-                                        INDIVIDUAL
+                                        {t ? t('mode_individual') : 'INDIVIDUAL'}
                                     </button>
                                     <button
                                         className={`flex-1 py-2 font-pixel text-[10px] ${tournamentType === '1V1' || tournamentType === 'SWISS' || tournamentType === 'GROUP' ? '' : '' /* reusing logic? no, separate state */} ${/* temporary inline logic for tab-like switch */ 'match' === 'match' ? '' : ''}`}
                                         style={{ backgroundColor: scoreState.mode === 'match' ? '#e94560' : 'transparent', color: scoreState.mode === 'match' ? 'white' : '#6b7280' }}
                                         onClick={() => setScoreState(prev => ({ ...prev, mode: 'match' }))}
                                     >
-                                        MATCH MODE
+                                        {t ? t('mode_match') : 'MATCH MODE'}
                                     </button>
                                 </div>
 
@@ -863,10 +1101,10 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                                 }));
                                             }}
                                         >
-                                            <option value="">Select Match...</option>
+                                        <option value="">{t ? t('select_match') : 'Select Match...'}</option>
                                             {matches.filter(m => m.status === 'pending').map(m => (
                                                 <option key={m.id} value={m.id}>
-                                                    R{m.round} - {players.find(p => p.id === m.p1_id)?.name} vs {players.find(p => p.id === m.p2_id)?.name}
+                                                    {t ? t('round_short') : 'R'}{m.round} - {players.find(p => p.id === m.p1_id)?.name} {t ? t('vs') : 'vs'} {players.find(p => p.id === m.p2_id)?.name}
                                                 </option>
                                             ))}
                                         </select>
@@ -887,57 +1125,57 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                                         <input type="number" className="w-full bg-black border-2 border-white p-2 text-xl text-center text-neon-pink" value={scoreState.p2} onChange={e => setScoreState({ ...scoreState, p2: e.target.value })} />
                                                     </div>
                                                 </div>
-                                                <Button onClick={updateScore} variant="success" className="w-full">SUBMIT RESULT</Button>
+                                            <Button onClick={updateScore} variant="success" className="w-full">{t ? t('submit_result') : 'SUBMIT RESULT'}</Button>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
                                 {/* INDIVIDUAL MODE UI */}
-                                {scoreState.mode === 'individual' && (
-                                    <div className="animate-in fade-in space-y-4">
-                                        <div className="text-xs text-gray-400 text-center mb-2 font-mono">QUICK ADD POINTS</div>
-                                        {players.map(p => (
-                                            <PlayerScoreRow key={p.id} player={p} onUpdate={updateIndividualScore} />
-                                        ))}
-                                    </div>
-                                )}
+                            {scoreState.mode === 'individual' && (
+                                <div className="animate-in fade-in space-y-4">
+                                    <div className="text-xs text-gray-400 text-center mb-2 font-mono">{t ? t('quick_add_points') : 'QUICK ADD POINTS'}</div>
+                                    {players.map(p => (
+                                        <PlayerScoreRow key={p.id} player={p} onUpdate={updateIndividualScore} t={t} />
+                                    ))}
+                                </div>
+                            )}
 
                             </PixelCard>
 
                             <div className="mt-8">
-                                <h3 className="font-pixel text-xs text-gray-500 mb-2">RECENT ACTIVITY</h3>
-                                {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
-                                    <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
-                                        R{m.round}: {players.find(p => p.id === m.p1_id)?.name} {m.score_p1}-{m.score_p2} {players.find(p => p.id === m.p2_id)?.name}
-                                    </div>
-                                ))}
+                            <h3 className="font-pixel text-xs text-gray-500 mb-2">{t ? t('recent_activity') : 'RECENT ACTIVITY'}</h3>
+                            {matches.filter(m => m.status === 'completed').slice(0, 5).map(m => (
+                                <div key={m.id} className="text-[10px] text-gray-400 font-mono mb-1">
+                                    {t ? t('round_short') : 'R'}{m.round}: {players.find(p => p.id === m.p1_id)?.name} {m.score_p1}-{m.score_p2} {players.find(p => p.id === m.p2_id)?.name}
+                                </div>
+                            ))}
                             </div>
                         </div>
                     )}
                     {tab === 'broadcast' && (
                         <div className="space-y-6">
-                            <PixelCard title="BROADCAST SYSTEM">
+                            <PixelCard title={t ? t('broadcast_system') : 'BROADCAST SYSTEM'}>
                                 <div className="mb-4">
-                                    <label className="font-pixel text-xs text-neon-cyan mb-2 block">MESSAGE CONTENT</label>
+                                    <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t ? t('message_content') : 'MESSAGE CONTENT'}</label>
                                     <textarea
                                         value={broadcastMsg}
                                         onChange={e => setBroadcastMsg(e.target.value)}
-                                        placeholder="Enter message to broadcast..."
+                                        placeholder={t ? t('enter_message') : 'Enter message to broadcast...'}
                                         className="w-full h-32 bg-gray-900 border-2 border-retro-text p-4 font-pixel text-white focus:outline-none focus:border-neon-pink shadow-pixel-sm resize-none"
                                     />
                                 </div>
 
                                 <div className="mb-6">
-                                    <label className="font-pixel text-xs text-neon-cyan mb-2 block">RECIPIENTS</label>
+                                    <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t ? t('recipients') : 'RECIPIENTS'}</label>
                                     <div className="flex gap-4 mb-4">
                                         <label className={`flex-1 border-2 p-3 flex items-center justify-center gap-2 cursor-pointer ${broadcastTarget === 'all' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
                                             <input type="radio" checked={broadcastTarget === 'all'} onChange={() => setBroadcastTarget('all')} className="hidden" />
-                                            <span className="font-pixel text-xs">ALL PLAYERS</span>
+                                            <span className="font-pixel text-xs">{t ? t('all_players') : 'ALL PLAYERS'}</span>
                                         </label>
                                         <label className={`flex-1 border-2 p-3 flex items-center justify-center gap-2 cursor-pointer ${broadcastTarget === 'select' ? 'border-neon-green bg-green-900/30' : 'border-gray-600'}`}>
                                             <input type="radio" checked={broadcastTarget === 'select'} onChange={() => setBroadcastTarget('select')} className="hidden" />
-                                            <span className="font-pixel text-xs">SELECT PLAYERS</span>
+                                            <span className="font-pixel text-xs">{t ? t('select_players') : 'SELECT PLAYERS'}</span>
                                         </label>
                                     </div>
 
@@ -962,7 +1200,7 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                                 </div>
 
                                 <Button onClick={handleSendBroadcast} className="w-full py-4 text-base" variant="secondary">
-                                    <Icons.Radio className="inline mr-2" /> SEND BROADCAST
+                                    <Icons.Radio className="inline mr-2" /> {t ? t('send_broadcast') : 'SEND BROADCAST'}
                                 </Button>
                             </PixelCard>
                         </div>
@@ -970,23 +1208,23 @@ function ScorerScreen({ players, matches, setPlayers, setMatches, timerStats, se
                 </div>
             </div>
 
-            <div className="bg-black border-t-4 border-retro-text grid grid-cols-5 p-2 gap-2">
-                <button onClick={() => setTab('manage')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'manage' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.ClipboardList size={20} className="mb-1" /> SCORES
-                </button>
-                <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Clock size={20} className="mb-1" /> TIMER
-                </button>
-                <button onClick={() => setTab('players')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'players' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Users size={20} className="mb-1" /> PLAYERS
-                </button>
-                <button onClick={() => setTab('schedule')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'schedule' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Calendar size={20} className="mb-1" /> SCHEDULE
-                </button>
-                <button onClick={() => setTab('broadcast')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'broadcast' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
-                    <Icons.Radio size={20} className="mb-1" /> MSG
-                </button>
-            </div>
+                <div className="bg-black border-t-4 border-retro-text grid grid-cols-5 p-2 gap-2">
+                    <button onClick={() => setTab('manage')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'manage' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                        <Icons.ClipboardList size={20} className="mb-1" /> {t ? t('scores') : 'SCORES'}
+                    </button>
+                    <button onClick={() => setTab('timer')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'timer' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                        <Icons.Clock size={20} className="mb-1" /> {t ? t('timer') : 'TIMER'}
+                    </button>
+                    <button onClick={() => setTab('players')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'players' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                        <Icons.Users size={20} className="mb-1" /> {t ? t('players') : 'PLAYERS'}
+                    </button>
+                    <button onClick={() => setTab('schedule')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'schedule' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                        <Icons.Calendar size={20} className="mb-1" /> {t ? t('schedule') : 'SCHEDULE'}
+                    </button>
+                    <button onClick={() => setTab('broadcast')} className={`p-3 font-pixel text-[10px] flex flex-col items-center border-2 ${tab === 'broadcast' ? 'bg-retro-accent border-white text-white' : 'border-gray-800 text-gray-500'}`}>
+                        <Icons.Radio size={20} className="mb-1" /> {t ? t('msg') : 'MSG'}
+                    </button>
+                </div>
         </div>
     );
 }
@@ -1009,6 +1247,30 @@ function App() {
     const syncFlagsRef = useRef({ players: false, matches: false, timer: false, messages: false });
     const hydrationRef = useRef({ players: false, matches: false, timer: false, messages: false });
     const [roomReady, setRoomReady] = useState(false);
+    const [lang, setLang] = useState(() => {
+        const stored = getLocalStorage("gk_lang", "zh");
+        return stored === "en" ? "en" : "zh";
+    });
+    const t = (key, vars) => {
+        const dict = I18N[lang] || I18N.zh;
+        let text = dict[key] || I18N.zh[key] || key;
+        if (vars) {
+            Object.keys(vars).forEach(k => {
+                const value = String(vars[k]);
+                text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), value);
+            });
+        }
+        return text;
+    };
+    const tRef = useRef(t);
+
+    useEffect(() => {
+        tRef.current = t;
+    }, [lang]);
+
+    useEffect(() => {
+        setLocalStorage("gk_lang", lang);
+    }, [lang]);
 
     useEffect(() => {
         try {
@@ -1085,7 +1347,8 @@ function App() {
         const messagesRef = firebaseDbRef.current.ref(`${basePath}/messages`);
 
         const handleDbError = (error) => {
-            setToast({ message: `Firebase error: ${error.code || 'unknown'}`, type: "error" });
+            const code = error?.code || error?.message || 'unknown';
+            setToast({ message: tRef.current('firebase_error_msg', { code }), type: "error" });
         };
         const onPlayers = (snap) => {
             hydrationRef.current.players = true;
@@ -1133,7 +1396,10 @@ function App() {
             return;
         }
         firebaseDbRef.current.ref(`rooms/${roomCode}/players`).set(players)
-            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
+            .catch(error => {
+                const code = error?.code || error?.message || 'unknown';
+                setToast({ message: tRef.current('firebase_write_failed', { code }), type: "error" });
+            });
     }, [roomCode, firebaseStatus.ready, players]);
 
     useEffect(() => {
@@ -1144,7 +1410,10 @@ function App() {
             return;
         }
         firebaseDbRef.current.ref(`rooms/${roomCode}/matches`).set(matches)
-            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
+            .catch(error => {
+                const code = error?.code || error?.message || 'unknown';
+                setToast({ message: tRef.current('firebase_write_failed', { code }), type: "error" });
+            });
     }, [roomCode, firebaseStatus.ready, matches]);
 
     useEffect(() => {
@@ -1155,7 +1424,10 @@ function App() {
             return;
         }
         firebaseDbRef.current.ref(`rooms/${roomCode}/timer`).set(timerStats)
-            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
+            .catch(error => {
+                const code = error?.code || error?.message || 'unknown';
+                setToast({ message: tRef.current('firebase_write_failed', { code }), type: "error" });
+            });
     }, [roomCode, firebaseStatus.ready, timerStats]);
 
     useEffect(() => {
@@ -1166,7 +1438,10 @@ function App() {
             return;
         }
         firebaseDbRef.current.ref(`rooms/${roomCode}/messages`).set(messages)
-            .catch(error => setToast({ message: `Firebase write failed: ${error.code || 'unknown'}`, type: "error" }));
+            .catch(error => {
+                const code = error?.code || error?.message || 'unknown';
+                setToast({ message: tRef.current('firebase_write_failed', { code }), type: "error" });
+            });
     }, [roomCode, firebaseStatus.ready, messages]);
 
     useEffect(() => {
@@ -1204,33 +1479,60 @@ function App() {
 
 
     const goBack = () => setViewMode('select');
-    const handleEnterScorer = () => {
+    const handleEnterScorer = async () => {
         const code = normalizeRoomCode(roomDraftScorer);
         if (code.length !== 4) {
-            setToast({ message: "Enter a 4-digit room code.", type: "error" });
+            setToast({ message: t('enter_room_code'), type: "error" });
             return;
         }
-        if (!firebaseStatus.ready) {
-            setToast({ message: firebaseStatus.error || "Firebase not ready.", type: "error" });
+        if (!firebaseStatus.ready || !firebaseDbRef.current) {
+            const msg = firebaseStatus.error
+                ? t('firebase_error_msg', { code: firebaseStatus.error })
+                : t('firebase_not_ready');
+            setToast({ message: msg, type: "error" });
             return;
         }
-        setRoomCode(code);
-        setViewMode('scorer');
+        try {
+            const metaRef = firebaseDbRef.current.ref(`rooms/${code}/meta`);
+            const snap = await metaRef.once('value');
+            if (!snap.exists()) {
+                await metaRef.set({ createdAt: window.firebase.database.ServerValue.TIMESTAMP });
+            }
+            setRoomCode(code);
+            setViewMode('scorer');
+        } catch (error) {
+            const codeMsg = error?.code || error?.message || 'unknown';
+            setToast({ message: t('firebase_error_msg', { code: codeMsg }), type: "error" });
+        }
     };
-    const handleEnterPlayer = () => {
+    const handleEnterPlayer = async () => {
         const code = normalizeRoomCode(roomDraftPlayer);
         if (code.length !== 4) {
-            setToast({ message: "Enter a 4-digit room code.", type: "error" });
+            setToast({ message: t('enter_room_code'), type: "error" });
             return;
         }
-        if (!firebaseStatus.ready) {
-            setToast({ message: firebaseStatus.error || "Firebase not ready.", type: "error" });
+        if (!firebaseStatus.ready || !firebaseDbRef.current) {
+            const msg = firebaseStatus.error
+                ? t('firebase_error_msg', { code: firebaseStatus.error })
+                : t('firebase_not_ready');
+            setToast({ message: msg, type: "error" });
             return;
         }
-        setLocalStorage(`gk_${code}_me`, null);
-        setCurrentPlayerId(null);
-        setRoomCode(code);
-        setViewMode('contestant');
+        try {
+            const metaRef = firebaseDbRef.current.ref(`rooms/${code}/meta`);
+            const snap = await metaRef.once('value');
+            if (!snap.exists()) {
+                setToast({ message: t('room_not_found'), type: "error" });
+                return;
+            }
+            setLocalStorage(`gk_${code}_me`, null);
+            setCurrentPlayerId(null);
+            setRoomCode(code);
+            setViewMode('contestant');
+        } catch (error) {
+            const codeMsg = error?.code || error?.message || 'unknown';
+            setToast({ message: t('firebase_error_msg', { code: codeMsg }), type: "error" });
+        }
     };
 
     return (
@@ -1241,103 +1543,121 @@ function App() {
                 </div>
             )}
 
-            {viewMode === 'select' && (
-                <div className="h-full flex flex-col justify-center items-center p-6 space-y-6 bg-retro-bg relative overflow-y-auto">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-gray-900/60 to-black pointer-events-none"></div>
+                {viewMode === 'select' && (
+                    <div className="h-full flex flex-col justify-center items-center p-6 space-y-6 bg-retro-bg relative overflow-y-auto">
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-gray-900/60 to-black pointer-events-none"></div>
 
-                    <div className="text-center z-10 animate-pulse">
-                        <h1 className="text-4xl font-pixel text-yellow-400 drop-shadow-[4px_4px_0_#990000] mb-2">賭王大賽</h1>
-                        <p className="font-pixel text-xs text-neon-pink">TOURNAMENT SYSTEM V2.1</p>
-                    </div>
-
-                    <div className="w-full space-y-6 z-10">
-                        <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Icons.Users className="text-neon-cyan" size={36} />
-                                <div>
-                                    <div className="text-lg font-pixel text-neon-cyan">記分員 / Scorer</div>
-                                    <div className="text-[10px] text-gray-400 font-mono">Create a 4-digit room code</div>
-                                </div>
-                            </div>
-                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">ROOM CODE</label>
-                            <input
-                                type="tel"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                maxLength={4}
-                                value={roomDraftScorer}
-                                onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
-                                placeholder="1234"
-                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
-                            />
-                            <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
-                                ENTER AS SCORER
-                            </Button>
+                        <div className="text-center z-10 animate-pulse">
+                            <h1 className="text-4xl font-pixel text-yellow-400 drop-shadow-[4px_4px_0_#990000] mb-2">{t('app_title')}</h1>
+                            <p className="font-pixel text-xs text-neon-pink">{t('app_subtitle')}</p>
                         </div>
 
-                        <div className="w-full bg-retro-card border-4 border-neon-green p-5">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Icons.Trophy className="text-neon-green" size={36} />
-                                <div>
-                                    <div className="text-lg font-pixel text-neon-green">玩家 / Player</div>
-                                    <div className="text-[10px] text-gray-400 font-mono">Join an existing room</div>
+                        <div className="z-10 flex items-center gap-2 text-[10px] font-pixel">
+                            <span className="text-gray-400">{t('language')}:</span>
+                            <button
+                                onClick={() => setLang('zh')}
+                                className={`px-2 py-1 border ${lang === 'zh' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
+                            >
+                                {t('lang_zh')}
+                            </button>
+                            <button
+                                onClick={() => setLang('en')}
+                                className={`px-2 py-1 border ${lang === 'en' ? 'bg-neon-cyan text-black border-white' : 'bg-gray-900 text-gray-400 border-gray-700'} shadow-pixel-sm`}
+                            >
+                                {t('lang_en')}
+                            </button>
+                        </div>
+
+                        <div className="w-full space-y-6 z-10">
+                            <div className="w-full bg-retro-card border-4 border-neon-cyan p-5">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Icons.Users className="text-neon-cyan" size={36} />
+                                    <div>
+                                        <div className="text-lg font-pixel text-neon-cyan">{t('scorer_title')}</div>
+                                        <div className="text-[10px] text-gray-400 font-mono">{t('scorer_desc')}</div>
+                                    </div>
                                 </div>
+                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={4}
+                                    value={roomDraftScorer}
+                                    onChange={e => setRoomDraftScorer(normalizeRoomCode(e.target.value))}
+                                    placeholder="1234"
+                                    className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                                />
+                                <Button onClick={handleEnterScorer} className="w-full mt-4" variant="primary" disabled={roomDraftScorer.length !== 4}>
+                                    {t('enter_scorer')}
+                                </Button>
                             </div>
-                            <label className="font-pixel text-xs text-neon-cyan mb-2 block">ROOM CODE</label>
-                            <input
-                                type="tel"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                maxLength={4}
-                                value={roomDraftPlayer}
-                                onChange={e => setRoomDraftPlayer(normalizeRoomCode(e.target.value))}
-                                placeholder="1234"
-                                className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
-                            />
-                            <Button onClick={handleEnterPlayer} className="w-full mt-4" variant="success" disabled={roomDraftPlayer.length !== 4}>
-                                ENTER AS PLAYER
-                            </Button>
+
+                            <div className="w-full bg-retro-card border-4 border-neon-green p-5">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Icons.Trophy className="text-neon-green" size={36} />
+                                    <div>
+                                        <div className="text-lg font-pixel text-neon-green">{t('player_title')}</div>
+                                        <div className="text-[10px] text-gray-400 font-mono">{t('player_desc')}</div>
+                                    </div>
+                                </div>
+                                <label className="font-pixel text-xs text-neon-cyan mb-2 block">{t('room_code')}</label>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={4}
+                                    value={roomDraftPlayer}
+                                    onChange={e => setRoomDraftPlayer(normalizeRoomCode(e.target.value))}
+                                    placeholder="1234"
+                                    className="w-full bg-gray-900 border-2 border-retro-text p-3 font-mono text-white text-center tracking-[0.3em] focus:outline-none focus:border-neon-pink shadow-pixel-sm"
+                                />
+                                <Button onClick={handleEnterPlayer} className="w-full mt-4" variant="success" disabled={roomDraftPlayer.length !== 4}>
+                                    {t('enter_player')}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
+                            {t('system_ready_enter')}
+                        </div>
+                        <div className={`absolute bottom-10 text-[8px] font-pixel ${firebaseStatus.ready ? 'text-neon-green' : 'text-red-400'}`}>
+                            {t('firebase_status', { status: firebaseStatus.ready ? t('firebase_ready') : t('firebase_error') })}
                         </div>
                     </div>
+                )}
 
-                    <div className="absolute bottom-4 text-[8px] font-pixel text-gray-600">
-                        SYSTEM READY // ENTER ROOM CODE
-                    </div>
-                    <div className={`absolute bottom-10 text-[8px] font-pixel ${firebaseStatus.ready ? 'text-neon-green' : 'text-red-400'}`}>
-                        FIREBASE: {firebaseStatus.ready ? 'READY' : 'ERROR'}
-                    </div>
-                </div>
-            )}
+                {viewMode === 'contestant' && (
+                    <ContestantScreen
+                        players={players}
+                        matches={matches}
+                        timerStats={timerStats}
+                        messages={messages}
+                        onBack={goBack}
+                        currentPlayerId={currentPlayerId}
+                        setCurrentPlayerId={setCurrentPlayerId}
+                        roomCode={roomCode}
+                        t={t}
+                    />
+                )}
 
-            {viewMode === 'contestant' && (
-                <ContestantScreen
-                    players={players}
-                    matches={matches}
-                    timerStats={timerStats}
-                    messages={messages}
-                    onBack={goBack}
-                    currentPlayerId={currentPlayerId}
-                    setCurrentPlayerId={setCurrentPlayerId}
-                    roomCode={roomCode}
-                />
-            )}
-
-            {viewMode === 'scorer' && (
-                <ScorerScreen
-                    players={players}
-                    matches={matches}
+                {viewMode === 'scorer' && (
+                    <ScorerScreen
+                        players={players}
+                        matches={matches}
                     setPlayers={setPlayers}
                     setMatches={setMatches}
                     timerStats={timerStats}
                     setTimerStats={setTimerStats}
                     onBack={goBack}
                     setToast={setToast}
-                    onSendMessage={handleSendMessage}
-                    roomCode={roomCode}
-                    roomReady={roomReady}
-                    firebaseStatus={firebaseStatus}
-                />
-            )}
+                        onSendMessage={handleSendMessage}
+                        roomCode={roomCode}
+                        roomReady={roomReady}
+                        firebaseStatus={firebaseStatus}
+                        t={t}
+                    />
+                )}
         </div>
     );
 }

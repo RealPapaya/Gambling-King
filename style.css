@@ -1,13 +1,19 @@
 @font-face {
     font-family: 'Zpix';
-    src: url('https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@latest/dist/Zpix.woff2') format('woff2');
+    src: local('Zpix'),
+        url('https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@latest/dist/Zpix.woff2') format('woff2');
     font-display: swap;
 }
 
 body {
     background-color: #1a1a2e;
     color: #eeeeee;
-    font-family: 'Zpix', 'Press Start 2P', sans-serif;
+    font-family: 'Zpix', 'Press Start 2P', 'Noto Sans TC', sans-serif;
+}
+
+.font-pixel,
+.font-mono {
+    font-family: 'Zpix', 'Press Start 2P', 'Noto Sans TC', monospace !important;
 }
 
 #loading-screen {
